@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#D97757" />
+  <meta name="description" content="Personal lucky number picker for Powerball & Mega Millions. Add personal factors like zodiac, dreams, birthday. Free PWA, for entertainment only." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="LuckyPick" />
+
+  <title>LuckyPick · Personal Lucky Number Picker</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ========== Header ========== -->
+  <header class="hero">
+    <h1>
+      <span class="logo">L</span>
+      <span>LuckyPick</span>
+    </h1>
+    <p class="tagline">Pick your lucky numbers · Add personal factors · For entertainment only</p>
+  </header>
+
+  <!-- ========== Tabs ========== -->
+  <div class="tabs">
+    <button class="tab active" data-game="powerball">Powerball</button>
+    <button class="tab" data-game="megamillions">Mega Millions</button>
+  </div>
+
+  <!-- ========== Factors ========== -->
+  <section class="card">
+    <h2>
+      <span class="num">1</span>
+      <span>Add Your Factors</span>
+      <span class="hint">Click below to add · Stack multiple</span>
+    </h2>
+    <div id="factor-list" class="factor-list"></div>
+    <div class="factor-add">
+      <button class="add-btn" data-add-factor="lucky">🍀 Lucky Numbers</button>
+      <button class="add-btn" data-add-factor="avoid">🚫 Avoid Numbers</button>
+      <button class="add-btn" data-add-factor="date">📅 Birthday / Date</button>
+      <button class="add-btn" data-add-factor="zodiac">♈ Zodiac Sign</button>
+      <button class="add-btn" data-add-factor="dream">💭 Dream Symbol</button>
+      <button class="add-btn" data-add-factor="lifepath">🔢 Life Path Number</button>
+    </div>
+  </section>
+
+  <!-- ========== Generate ========== -->
+  <section class="card">
+    <button class="btn-primary" id="btn-generate">
+      🎯 Generate My Lucky Numbers
+    </button>
+  </section>
+
+  <!-- ========== Results ========== -->
+  <section class="card" id="results-card">
+    <h2>
+      <span class="num">2</span>
+      <span>Your Numbers</span>
+      <span class="hint">Based on your factors</span>
+    </h2>
+    <div id="results"></div>
+  </section>
+
+  <!-- ========== Recent Draws ========== -->
+  <section class="card">
+    <h2>
+      <span class="num">3</span>
+      <span>Recent Draws</span>
+      <span class="hint">Latest results for reference</span>
+    </h2>
+    <div id="freq"></div>
+  </section>
+
+  <!-- ========== PayPal Tip ========== -->
+  <section class="card tip-card">
+    <h2>
+      <span class="num">☕</span>
+      <span>Support LuckyPick</span>
+    </h2>
+    <p class="muted">
+      LuckyPick is free, with no ads and no tracking. If it helped you pick a number,
+      consider supporting its development with a small tip.
+    </p>
+    <div class="tip-actions">
+      <a class="paypal-btn" href="https://paypal.me/hinewly" target="_blank" rel="noopener">
+        ☕ Tip via PayPal
+      </a>
+      <span class="muted small">One-time, any amount</span>
+    </div>
+  </section>
+
+  <!-- ========== Debug Info (Dev) ========== -->
+  <details class="card debug-card" id="debug-info">
+    <summary>
+      <span class="num">🔧</span>
+      <span><b>System Status (dev)</b></span>
+      <span class="hint">Click to expand</span>
+    </summary>
+    <div class="debug-content" id="debug-content">
+      <div>Loading…</div>
+    </div>
+  </details>
+
+  <!-- ========== Disclaimer ========== -->
+  <p class="disclaimer">
+    For entertainment purposes only. This app does not guarantee any winning odds.
+    Lottery drawings are random. Please play responsibly. Must be 18+ to play.<br />
+    Not affiliated with Powerball, Mega Millions, or any official lottery operator.
+  </p>
+
+</div>
+
+<!-- ========== Modal ========== -->
+<div class="modal-mask" id="modal-mask">
+  <div class="modal" id="modal"></div>
+</div>
+
+<!-- ========== Scripts ========== -->
+<script src="data/powerball.js"></script>
+<script src="data/megamillions.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/app.js"></script>
+
+<!-- Service Worker (Production only, skipped on localhost) -->
+<script>
+  const isLocalDev = location.hostname === 'localhost'
+                  || location.hostname === '127.0.0.1'
+                  || location.protocol === 'file:';
+  if (!isLocalDev && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(reg => console.log('[LuckyPick] SW registered:', reg.scope))
+        .catch(err => console.warn('[LuckyPick] SW failed:', err));
+    });
+  }
+</script>
+
+</body>
+</html>
