@@ -302,6 +302,81 @@
   // ============================================================
   // Init
   // ============================================================
+
+  // ============================================================
+  // Update indicator
+  // ============================================================
+  function updateLastUpdate() {
+    const el = document.getElementById('last-update');
+    if (!el) return;
+    // 找出当前彩种最新一期的日期
+    const hist = state.history[state.game] || [];
+    if (hist.length > 0) {
+      const latest = hist[hist.length - 1];
+      el.textContent = '📅 Last update: ' + (latest.date || 'unknown');
+    } else {
+      el.textContent = 'No data';
+    }
+  }
+
+  async function refreshData() {
+    const btn = document.getElementById('refresh-data-btn');
+    if (!btn) return;
+    const original = btn.textContent;
+    btn.textContent = '⏳ Refreshing...';
+    btn.disabled = true;
+    try {
+      // 清掉 SW 缓存
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        for (const k of keys) {
+          if (k.startsWith('lucky-pick-global-')) await caches.delete(k);
+        }
+      }
+      // 强制 reload（带 cache-bust）
+      location.reload(true);
+    } catch (e) {
+      alert('Refresh failed: ' + e.message);
+      btn.textContent = original;
+      btn.disabled = false;
+    }
+  }
+
+  // SW 注册 & 更新检测
+  let refreshing = false;
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js')
+      .then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const newSW = reg.installing;
+          if (!newSW) return;
+          newSW.addEventListener('statechange', () => {
+            if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+              // 新版本可用
+              showUpdateToast();
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('[LuckyPick] SW failed:', err));
+
+    // 监听 controllerchange（新 SW 接管）
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  }
+
+  function showUpdateToast() {
+    const toast = document.createElement('div');
+    toast.className = 'update-toast';
+    toast.innerHTML = '🎉 New version available! <button id="toast-refresh">Refresh</button>';
+    document.body.appendChild(toast);
+    document.getElementById('toast-refresh').onclick = () => location.reload(true);
+    setTimeout(() => toast.classList.add('show'), 100);
+  }
+
   function init() {
     loadData();
     loadState();
@@ -324,10 +399,22 @@
     if (mask) mask.addEventListener('click', e => { if (e.target === mask) closeModal(); });
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === state.game));
     renderFactors(); renderResults(); renderRecent(); updateDebug();
-    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', updateDebug));
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      updateLastUpdate();
+      updateDebug();
+    }));
+    updateLastUpdate();
+    updateDebug();
+
+    // Refresh data 按钮
+    const refreshBtn = document.getElementById('refresh-data-btn');
+    if (refreshBtn) refreshBtn.addEventListener('click', refreshData);
 
     console.log('[LuckyPick Global] ready', { powerball: state.history.powerball.length, megamillions: state.history.megamillions.length });
   }
+
+  // 把新代码插入到 init() 之前
+
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
