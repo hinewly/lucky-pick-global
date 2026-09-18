@@ -854,6 +854,23 @@ header.hero .tagline {
 .debug-content .val.bad { color: var(--accent-deep); }
 
 
+
+/* ========== 使用说明 / 安装步骤 ========== */
+.install-card {
+  background: linear-gradient(135deg, #FFF8F3 0%, #FFFFFF 100%);
+  border-color: #FBE8DE;
+}
+.install-steps {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+.install-steps li {
+  margin-bottom: 4px;
+}
+
 /* ========== PayPal Tip Card ========== */
 .tip-card {
   background: linear-gradient(135deg, #FFF8F3 0%, #FFFFFF 100%);

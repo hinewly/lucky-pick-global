@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#D97757" />
-  <meta name="description" content="Personal lucky number picker for Powerball & Mega Millions. Add personal factors like zodiac, dreams, birthday. Free PWA, for entertainment only." />
+  <meta name="description" content="Tap Generate for instant random lucky numbers. Optionally add personal factors like zodiac or birthday. For entertainment only." />
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
@@ -27,8 +27,49 @@
       <span class="logo">L</span>
       <span>LuckyPick</span>
     </h1>
-    <p class="tagline">Pick your lucky numbers · Add personal factors · For entertainment only</p>
+    <p class="tagline">Tap <b>Generate</b> for instant random numbers · Or add factors for a more personal pick · For entertainment only</p>
   </header>
+
+  <!-- ========== 使用说明（明显位置） ========== -->
+  <details class="card guide-card" open>
+    <summary>
+      <span class="num">📖</span>
+      <span><b>How does this work?</b></span>
+      <span class="hint">Click to hide/show</span>
+    </summary>
+    <div class="guide-content">
+      <p>This is a <b>lucky number picker</b> for Powerball &amp; Mega Millions. You can use it in two ways:</p>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <b>Just tap Generate</b><br />
+          <span class="muted">No setup needed. You get random numbers in one tap — same odds as a Quick Pick at the store.</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <b>Or add personal factors first</b><br />
+          <span class="muted">Click the buttons below (zodiac, dream, birthday, lucky numbers…). We weight the random pool around your inputs.</span>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <b>Take the numbers to a retailer</b><br />
+          <span class="muted">Buy a ticket, watch the draw, hope for the best. The odds don't change — but it feels more yours.</span>
+        </div>
+      </div>
+
+      <p class="muted small">
+        🎲 No tracking · no signup · no ads · works offline<br />
+        ⚠️ For entertainment only. Odds are the same as any random pick.
+      </p>
+    </div>
+  </details>
 
   <!-- ========== Tabs ========== -->
   <div class="tabs">
@@ -36,12 +77,12 @@
     <button class="tab" data-game="megamillions">Mega Millions</button>
   </div>
 
-  <!-- ========== Factors ========== -->
+  <!-- ========== Factors (optional) ========== -->
   <section class="card">
     <h2>
       <span class="num">1</span>
-      <span>Add Your Factors</span>
-      <span class="hint">Click below to add · Stack multiple</span>
+      <span>Add Personal Factors</span>
+      <span class="hint">Optional · skip if you want pure random</span>
     </h2>
     <div id="factor-list" class="factor-list"></div>
     <div class="factor-add">
@@ -56,17 +97,24 @@
 
   <!-- ========== Generate ========== -->
   <section class="card">
+    <h2>
+      <span class="num">2</span>
+      <span>Generate</span>
+    </h2>
     <button class="btn-primary" id="btn-generate">
       🎯 Generate My Lucky Numbers
     </button>
+    <p class="muted small center" style="margin-top: 10px;">
+      💡 Tap once for 3 sets. Add factors above to weight the pool toward them.
+    </p>
   </section>
 
   <!-- ========== Results ========== -->
   <section class="card" id="results-card">
     <h2>
-      <span class="num">2</span>
+      <span class="num">3</span>
       <span>Your Numbers</span>
-      <span class="hint">Based on your factors</span>
+      <span class="hint">Based on your factors (or random if none)</span>
     </h2>
     <div id="results"></div>
   </section>
@@ -74,9 +122,9 @@
   <!-- ========== Recent Draws ========== -->
   <section class="card">
     <h2>
-      <span class="num">3</span>
+      <span class="num">4</span>
       <span>Recent Draws</span>
-      <span class="hint">Latest results for reference</span>
+      <span class="hint">Latest real results</span>
     </h2>
     <div id="freq"></div>
   </section>
@@ -88,8 +136,7 @@
       <span>Support LuckyPick</span>
     </h2>
     <p class="muted">
-      LuckyPick is free, with no ads and no tracking. If it helped you pick a number,
-      consider supporting its development with a small tip.
+      LuckyPick is free, with no ads and no tracking. If it helped you pick a number, consider a small tip.
     </p>
     <div class="tip-actions">
       <a class="paypal-btn" href="https://paypal.me/hinewly" target="_blank" rel="noopener">
@@ -98,6 +145,50 @@
       <span class="muted small">One-time, any amount</span>
     </div>
   </section>
+
+  <!-- ========== 📱 PWA Install Guide ========== -->
+  <details class="card install-card" id="install-guide">
+    <summary>
+      <span class="num">📱</span>
+      <span><b>Add to your phone?</b> (so you don't open a browser every time)</span>
+      <span class="hint">Click to expand</span>
+    </summary>
+    <div class="guide-content">
+      <p>You can install LuckyPick as an app on your phone. Once installed, just tap the icon on your home screen — it opens like a regular app, works offline.</p>
+
+      <div class="step">
+        <div class="step-num">🍎</div>
+        <div class="step-body">
+          <b>iPhone / iPad (Safari)</b>
+          <ol class="install-steps">
+            <li>Open this page in <b>Safari</b> (not Chrome or other browsers)</li>
+            <li>Tap the <b>Share button</b> (square with arrow pointing up)</li>
+            <li>Scroll down and tap <b>"Add to Home Screen"</b></li>
+            <li>Name it "LuckyPick" → tap <b>Add</b></li>
+            <li>Look for the icon on your home screen</li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">🤖</div>
+        <div class="step-body">
+          <b>Android (Chrome)</b>
+          <ol class="install-steps">
+            <li>Open this page in <b>Chrome</b></li>
+            <li>Tap the <b>three-dot menu</b> (top right)</li>
+            <li>Tap <b>"Add to Home Screen"</b> or <b>"Install App"</b></li>
+            <li>Confirm → look for the icon on your home screen</li>
+          </ol>
+        </div>
+      </div>
+
+      <p class="muted small">
+        💡 Once installed, you don't need a browser. The app works offline.<br />
+        💡 Updates happen automatically — just open the app and pull to refresh (if supported).
+      </p>
+    </div>
+  </details>
 
   <!-- ========== Debug Info (Dev) ========== -->
   <details class="card debug-card" id="debug-info">
