@@ -309,10 +309,10 @@
   function updateLastUpdate() {
     const el = document.getElementById('last-update');
     if (!el) return;
-    // 找出当前彩种最新一期的日期
     const hist = state.history[state.game] || [];
     if (hist.length > 0) {
-      const latest = hist[hist.length - 1];
+      // 数据文件是 [最新, ..., 最旧]，所以第一个元素就是最新
+      const latest = hist[0];
       el.textContent = '📅 Last update: ' + (latest.date || 'unknown');
     } else {
       el.textContent = 'No data';
