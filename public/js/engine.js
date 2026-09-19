@@ -269,15 +269,32 @@
   // Weights synthesis
   // ============================================================
 
+  // 每个 factor 类型有自己的 data 结构：
+  //   lucky / avoid : Array<number>          (e.g. [7])
+  //   date          : { dateStr, digits:number[] }
+  //   zodiac        : { ..., numbers:number[] }
+  //   dream         : { keywords, numbers:number[] }
+  //   lifepath      : { lifePathNumber, numbers:number[] }
+  //   lyrics        : { text }                (no numbers; handled in app.js, hard-override)
   function factorsToSets(factors) {
     const lucky = new Set();
     const avoid = new Set();
     for (const f of factors) {
-      if (f.type === 'avoid') {
-        for (const n of (f.data || [])) avoid.add(n);
-      } else {
-        for (const n of (f.data && f.data.numbers ? f.data.numbers : f.data || [])) {
-          lucky.add(n);
+      if (!f) continue;
+      let numbers = [];
+      const t = f.type;
+      if (t === 'lucky' || t === 'avoid') {
+        numbers = Array.isArray(f.data) ? f.data : [];
+      } else if (t === 'date') {
+        numbers = (f.data && Array.isArray(f.data.digits)) ? f.data.digits : [];
+      } else if (t === 'zodiac' || t === 'dream' || t === 'lifepath') {
+        numbers = (f.data && Array.isArray(f.data.numbers)) ? f.data.numbers : [];
+      }
+      // lyrics: 跳过（app.js 里 hard-override 整组）
+      const targetSet = (t === 'avoid') ? avoid : lucky;
+      for (const n of numbers) {
+        if (typeof n === 'number' && Number.isFinite(n)) {
+          targetSet.add(n);
         }
       }
     }
