@@ -752,15 +752,16 @@
       body = `<label>Zodiac sign</label>
               <select id="modal-input">${opts}</select>`;
     } else if (type === 'dream') {
-      body = `<label>Dream symbols (separated by spaces)</label>
-              <input type="text" id="modal-input" placeholder="e.g. water fish cat" />`;
+      body = '<label>Dream symbols (separated by spaces)</label>'
+           + '<input type="text" id="modal-input" maxlength="256" placeholder="e.g. water fish cat" />'
+           + '<p class="muted small">Max 256 characters.</p>';
     } else if (type === 'lifepath') {
       body = `<label>Birthday (used for Life Path Number)</label>
               <input type="date" id="modal-input" value="1990-01-01" />`;
     } else if (type === 'lyrics') {
-      body = `<label>Lyric / phrase (anything that means something to you right now)</label>
-              <textarea id="modal-input" rows="3" placeholder="e.g. hello darkness my old friend&#10;or a sentence, a thought, anything"></textarea>
-              <p class="muted small">Tip: same text at a different moment will give different numbers.</p>`;
+      body = '<label>Lyric / phrase (anything that means something to you right now)</label>'
+           + '<textarea id="modal-input" rows="3" maxlength="256" placeholder="e.g. hello darkness my old friend&#10;or a sentence, a thought, anything"></textarea>'
+           + '<p class="muted small">Max 256 characters. Same text at a different moment will give different numbers.</p>';
     }
 
     modal.innerHTML = `<h3>Add ${title(type)}</h3>${body}
@@ -794,9 +795,18 @@
         }
         else if (type === 'date') factor = Engine.makeDate(val);
         else if (type === 'zodiac') factor = Engine.makeZodiac(val);
-        else if (type === 'dream') { const kws = val.split(/\s+/).filter(Boolean); if (!kws.length) return alert('Enter at least one symbol'); factor = Engine.makeDream(kws); }
+        else if (type === 'dream') {
+          if (val.length > 256) return alert('Max 256 characters (you entered ' + val.length + ')');
+          const kws = val.split(/\s+/).filter(Boolean);
+          if (!kws.length) return alert('Enter at least one symbol');
+          factor = Engine.makeDream(kws);
+        }
         else if (type === 'lifepath') factor = Engine.makeLifePath(val);
-        else if (type === 'lyrics') { if (!val || val.length < 2) return alert('Type at least 2 characters'); factor = Engine.makeLyrics(val); }
+        else if (type === 'lyrics') {
+          if (!val || val.length < 2) return alert('Type at least 2 characters');
+          if (val.length > 256) return alert('Max 256 characters (you entered ' + val.length + ')');
+          factor = Engine.makeLyrics(val);
+        }
       } catch (e) { return alert('Parse error: ' + e.message); }
       if (factor) { addFactor(factor); closeModal(); }
     };
@@ -816,17 +826,18 @@
   function parseNums(s) {
     return s.split(/[\s,,，]+/).map(x => Number(x.trim())).filter(n => Number.isFinite(n));
   }
-  // 数字根算法：把任意数字串收成 [min, max] 之间的数
-  // 例: 78 → 15 (7+8), 12345 → 15, 999 → 27, 999999 → 9
+  // 数字根算法：把数字串收成 [min, max] 之间的数
+  // 输入限制：只允许数字，最多 9 位
+  // 例: 7 → 7, 78 → 15 (7+8), 12345 → 15, 999999999 → 63, 9999999999 → 9 (超过 9 位会被拒)
   function parseLuckyInput(s, min, max) {
     min = (min == null) ? 1 : min;
     max = (max == null) ? 69 : max;
-    // 只留数字（'7-18' → '718'，'1,000' → '1000'）
+    // 只留数字（防用户粘贴时带空格等）
     const digits = String(s).replace(/\D/g, '');
-    if (!digits) return { error: 'Type some numbers (e.g. 7 or 12345)' };
-    // 尝试直接解析
+    if (!digits) return { error: 'Type some digits (e.g. 7 or 12345)' };
+    if (digits.length > 9) return { error: 'Maximum 9 digits allowed (you entered ' + digits.length + ')' };
     let n = parseInt(digits, 10);
-    if (!Number.isFinite(n)) return { error: 'Number too large' };
+    if (!Number.isFinite(n)) return { error: 'Invalid number' };
     if (n >= min && n <= max) return { value: n, original: digits, transformed: false };
     // 数字根
     let sum = 0;
