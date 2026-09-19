@@ -115,14 +115,38 @@
     </h2>
     <div id="factor-list" class="factor-list"></div>
     <div class="factor-add">
-      <button class="add-btn" data-add-factor="lucky">🍀 Lucky Numbers</button>
-      <button class="add-btn" data-add-factor="avoid">🚫 Avoid Numbers</button>
+      <button class="add-btn" data-add-factor="lucky">🍀 Lucky #</button>
+      <button class="add-btn" data-add-factor="avoid">🚫 Avoid #</button>
       <button class="add-btn" data-add-factor="date">📅 Birthday / Date</button>
       <button class="add-btn" data-add-factor="zodiac">♈ Zodiac Sign</button>
       <button class="add-btn" data-add-factor="dream">💭 Dream Symbol</button>
       <button class="add-btn" data-add-factor="lifepath">🔢 Life Path Number</button>
       <button class="add-btn" data-add-factor="lyrics">🎵 Lyric / Phrase</button>
     </div>
+
+    <!-- 每个按钮的说明，可点击展开 / 收起 -->
+    <details class="factor-help" open>
+      <summary>📖 What does each button do? <span class="muted small">(click to hide)</span></summary>
+      <div class="factor-help-content">
+        <dl class="factor-help-list">
+          <dt>🍀 Lucky #</dt>
+          <dd>Add <b>one number at a time</b> you want included. Tap the button, enter a number, tap Add. Repeat for more.</dd>
+          <dt>🚫 Avoid #</dt>
+          <dd>Add <b>one number at a time</b> you want excluded. Same as Lucky, but opposite.</dd>
+          <dt>📅 Birthday / Date</dt>
+          <dd>A specific date (your birthday, anniversary). Its digits get pulled into the mix.</dd>
+          <dt>♈ Zodiac Sign</dt>
+          <dd>Pick your Western zodiac sign. Adds that sign\'s traditional lucky numbers.</dd>
+          <dt>💭 Dream Symbol</dt>
+          <dd>Type one or more dream keywords (e.g. <i>water cat bird</i>). Each keyword has its own number set.</dd>
+          <dt>🔢 Life Path Number</dt>
+          <dd>Enter your birthday. Calculates your numerology Life Path number, then mixes it in.</dd>
+          <dt>🎵 Lyric / Phrase</dt>
+          <dd>Type any lyric, sentence, or thought. Generates a fresh set of numbers each Generate.</dd>
+        </dl>
+        <p class="muted small">💡 Tap Generate below to roll a new set. All your factors combine.</p>
+      </div>
+    </details>
   </section>
 
   <!-- ========== Generate ========== -->

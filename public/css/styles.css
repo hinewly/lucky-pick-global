@@ -1237,3 +1237,55 @@ header.hero .tagline {
   margin-bottom: 4px;
   color: #5b5b5b;
 }
+
+/* ========== Factor Help Details ========== */
+.factor-help {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #FAF8F5;
+  border: 1px solid #E8E2D8;
+  border-radius: 12px;
+  font-size: 13px;
+}
+.factor-help summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: #5b5b5b;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+}
+.factor-help summary::-webkit-details-marker { display: none; }
+.factor-help summary::before {
+  content: '▼';
+  font-size: 10px;
+  color: #999;
+  transition: transform 0.15s ease;
+  display: inline-block;
+}
+.factor-help:not([open]) summary::before {
+  transform: rotate(-90deg);
+}
+.factor-help-content {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed #E8E2D8;
+}
+.factor-help-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 8px 14px;
+}
+.factor-help-list dt {
+  font-weight: 600;
+  color: #D97757;
+  white-space: nowrap;
+}
+.factor-help-list dd {
+  margin: 0;
+  color: #5b5b5b;
+  line-height: 1.5;
+}

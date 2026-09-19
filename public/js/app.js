@@ -775,8 +775,22 @@
       const val = ($('modal-input').value || '').trim();
       let factor = null;
       try {
-        if (type === 'lucky') { const ns = parseNums(val); if (!ns.length) return alert('Enter at least one number'); factor = Engine.makeLucky(ns); }
-        else if (type === 'avoid') { const ns = parseNums(val); if (!ns.length) return alert('Enter at least one number'); factor = Engine.makeAvoid(ns); }
+        if (type === 'lucky') {
+          const n = parseSingleNum(val);
+          if (n === null) return alert('Enter a whole number between 1 and 69');
+          if (state.factors.some(f => f.type === 'lucky' && f.data && f.data.includes(n))) {
+            return alert('You already added #' + n + ' to lucky numbers');
+          }
+          factor = Engine.makeLucky([n]);
+        }
+        else if (type === 'avoid') {
+          const n = parseSingleNum(val);
+          if (n === null) return alert('Enter a whole number between 1 and 69');
+          if (state.factors.some(f => f.type === 'avoid' && f.data && f.data.includes(n))) {
+            return alert('You already added #' + n + ' to avoid numbers');
+          }
+          factor = Engine.makeAvoid([n]);
+        }
         else if (type === 'date') factor = Engine.makeDate(val);
         else if (type === 'zodiac') factor = Engine.makeZodiac(val);
         else if (type === 'dream') { const kws = val.split(/\s+/).filter(Boolean); if (!kws.length) return alert('Enter at least one symbol'); factor = Engine.makeDream(kws); }
@@ -800,6 +814,11 @@
   }
   function parseNums(s) {
     return s.split(/[\s,,，]+/).map(x => Number(x.trim())).filter(n => Number.isFinite(n));
+  }
+  function parseSingleNum(s) {
+    const n = Number(String(s).trim());
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1 || n > 69) return null;
+    return n;
   }
   function closeModal() { $('modal-mask').classList.remove('show'); }
 
