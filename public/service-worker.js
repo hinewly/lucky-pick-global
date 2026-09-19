@@ -1,20 +1,21 @@
-const CACHE_NAME = 'lucky-pick-global-v4';
+const CACHE_VERSION = 'v5';
+const CACHE_NAME = 'lucky-pick-global-' + CACHE_VERSION;
 const PRECACHE_URLS = [
-  './',
-  'index.html',
-  'manifest.json',
-  'css/styles.css',
-  'js/engine.js',
-  'js/app.js',
-  'icons/icon.svg',
-  'data/powerball.js',
-  'data/megamillions.js',
+  './?v=5',
+  'index.html?v=5',
+  'manifest.json?v=5',
+  'css/styles.css?v=5',
+  'js/engine.js?v=5',
+  'js/app.js?v=5',
+  'icons/icon.svg?v=5',
+  'data/powerball.js?v=5',
+  'data/megamillions.js?v=5',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then(cache => cache.addAll(PRECACHE_URLS.map(u => u.replace('?v=5', ''))))
       .then(() => self.skipWaiting())
   );
 });
@@ -22,6 +23,7 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
+      // 清掉所有旧版本（lucky-pick-global-*）
       keys.filter(k => k.startsWith('lucky-pick-global-') && k !== CACHE_NAME)
           .map(k => caches.delete(k))
     )).then(() => self.clients.claim())
@@ -34,7 +36,10 @@ self.addEventListener('fetch', (event) => {
   const isHTML = event.request.mode === 'navigate'
               || event.request.destination === 'document'
               || (event.request.headers.get('accept') || '').includes('text/html');
-  if (isHTML) {
+  
+  // 所有文件都用 network-first（确保最新）
+  if (isHTML || url.pathname.endsWith('.js') || url.pathname.endsWith('.css') 
+      || url.pathname.includes('/data/') || url.pathname.endsWith('.json')) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then(response => {
@@ -43,23 +48,12 @@ self.addEventListener('fetch', (event) => {
             caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
           }
           return response;
-        }).catch(() => caches.match('./index.html'))
+        }).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html')))
     );
     return;
   }
-  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.includes('/data/')) {
-    event.respondWith(
-      fetch(event.request, { cache: 'no-store' })
-        .then(response => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
-          }
-          return response;
-        }).catch(() => caches.match(event.request))
-    );
-    return;
-  }
+  
+  // 图片等用 cache-first
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
