@@ -766,10 +766,11 @@ header.hero .tagline {
 }
 
 .recent-issue {
-  flex: 0 0 70px;
+  flex: 0 0 96px;
   font-weight: 600;
   color: var(--accent-deep);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .recent-date {

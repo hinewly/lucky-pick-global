@@ -711,7 +711,7 @@
       return;
     }
 
-    const recent = Engine.recentDraws(history, 10);
+    const recent = Engine.recentDraws(history, 5);
     const list = el('div', { class: 'recent-list' });
     recent.forEach(draw => {
       const line = el('div', { class: 'recent-item' }, [
