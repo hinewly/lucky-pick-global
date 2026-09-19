@@ -779,13 +779,18 @@
           const cfg = Engine.GAMES[state.game];
           const max = cfg ? cfg.mainRange[1] : 69;
           const min = cfg ? cfg.mainRange[0] : 1;
-          const n = parseSingleNum(val, min, max);
-          if (n === null) return alert('Enter a whole number between ' + min + ' and ' + max + ' for ' + (cfg ? cfg.name : ''));
+          const result = parseLuckyInput(val, min, max);
+          if (result.error) return alert(result.error);
+          const n = result.value;
           const typeName = type === 'lucky' ? 'lucky numbers' : 'avoid numbers';
           if (state.factors.some(f => f.type === type && f.data && f.data.includes(n))) {
             return alert('You already added #' + n + ' to ' + typeName);
           }
           factor = type === 'lucky' ? Engine.makeLucky([n]) : Engine.makeAvoid([n]);
+          if (result.transformed) {
+            // 给用户一点反馈，让他们知道发生了什么
+            setTimeout(() => toast('ℹ️ ' + (type === 'lucky' ? 'Lucky' : 'Avoid') + ' #' + n + ' (from ' + result.original + ')'), 100);
+          }
         }
         else if (type === 'date') factor = Engine.makeDate(val);
         else if (type === 'zodiac') factor = Engine.makeZodiac(val);
@@ -811,12 +816,29 @@
   function parseNums(s) {
     return s.split(/[\s,,，]+/).map(x => Number(x.trim())).filter(n => Number.isFinite(n));
   }
-  function parseSingleNum(s, min, max) {
+  // 数字根算法：把任意数字串收成 [min, max] 之间的数
+  // 例: 78 → 15 (7+8), 12345 → 15, 999 → 27, 999999 → 9
+  function parseLuckyInput(s, min, max) {
     min = (min == null) ? 1 : min;
     max = (max == null) ? 69 : max;
-    const n = Number(String(s).trim());
-    if (!Number.isFinite(n) || !Number.isInteger(n) || n < min || n > max) return null;
-    return n;
+    // 只留数字（'7-18' → '718'，'1,000' → '1000'）
+    const digits = String(s).replace(/\D/g, '');
+    if (!digits) return { error: 'Type some numbers (e.g. 7 or 12345)' };
+    // 尝试直接解析
+    let n = parseInt(digits, 10);
+    if (!Number.isFinite(n)) return { error: 'Number too large' };
+    if (n >= min && n <= max) return { value: n, original: digits, transformed: false };
+    // 数字根
+    let sum = 0;
+    for (const ch of digits) sum += parseInt(ch, 10);
+    while (sum > max) {
+      let s2 = 0;
+      for (const ch of String(sum)) s2 += parseInt(ch, 10);
+      if (s2 === sum) break;
+      sum = s2;
+    }
+    if (sum < min) sum = min;
+    return { value: sum, original: digits, transformed: true };
   }
   function closeModal() { $('modal-mask').classList.remove('show'); }
 
