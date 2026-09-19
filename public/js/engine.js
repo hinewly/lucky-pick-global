@@ -365,7 +365,8 @@
 
   // Recent draws display
   function recentDraws(history, count = 10) {
-    return history.slice(-count).reverse();
+    // 数据文件是 [最新, ..., 最旧] 顺序，直接取最后 N 个就是 [最新, ..., 最旧]
+    return history.slice(-count);
   }
 
   // Award tier (simplified)
