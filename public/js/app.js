@@ -752,16 +752,12 @@
       body = `<label>Zodiac sign</label>
               <select id="modal-input">${opts}</select>`;
     } else if (type === 'dream') {
-      body = '<label>Dream symbols (separated by spaces)</label>'
-           + '<input type="text" id="modal-input" maxlength="256" placeholder="e.g. water fish cat" />'
-           + '<p class="muted small">Max 256 characters.</p>';
+      body = '<input type="text" id="modal-input" maxlength="256" placeholder="Dream keywords (e.g. water fish)" autocomplete="off" />';
     } else if (type === 'lifepath') {
       body = `<label>Birthday (used for Life Path Number)</label>
               <input type="date" id="modal-input" value="1990-01-01" />`;
     } else if (type === 'lyrics') {
-      body = '<label>Lyric / phrase (anything that means something to you right now)</label>'
-           + '<textarea id="modal-input" rows="3" maxlength="256" placeholder="e.g. hello darkness my old friend&#10;or a sentence, a thought, anything"></textarea>'
-           + '<p class="muted small">Max 256 characters. Same text at a different moment will give different numbers.</p>';
+      body = '<textarea id="modal-input" rows="3" maxlength="256" placeholder="A lyric, phrase, or thought&#10;(e.g. hello darkness my old friend)" autocomplete="off"></textarea>';
     }
 
     modal.innerHTML = `<h3>Add ${title(type)}</h3>${body}
