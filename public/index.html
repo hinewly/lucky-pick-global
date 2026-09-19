@@ -189,18 +189,20 @@
       <a class="paypal-btn" href="https://paypal.me/hinewly" target="_blank" rel="noopener">
         ☕ Tip via PayPal
       </a>
+      <!-- TODO: USDT 等你有真实 TRC20 地址后取消注释
       <a class="crypto-btn" href="javascript:void(0)" onclick="toggleCrypto()">
         💎 USDT (TRC20)
       </a>
-    </div>
-    <div class="crypto-panel" id="crypto-panel" style="display:none;">
-      <p class="muted small center">Send USDT (TRC20 network) to:</p>
-      <code class="crypto-address" id="crypto-address">TXyZ8K9n3m2PqL7vR5wB4cF6hN8jD1sA2eG</code>
-      <button class="copy-btn" onclick="copyCrypto()">📋 Copy address</button>
-      <p class="muted small center">Network: TRC20 (Tron) · Tap the address to copy</p>
+      <div class="crypto-panel" id="crypto-panel" style="display:none;">
+        <p class="muted small center">Send USDT (TRC20 network) to:</p>
+        <code class="crypto-address" id="crypto-address">YOUR_REAL_TRC20_ADDRESS_HERE</code>
+        <button class="copy-btn" onclick="copyCrypto()">📋 Copy address</button>
+        <p class="muted small center">Network: TRC20 (Tron) · Tap the address to copy</p>
+      </div>
+      -->
     </div>
     <p class="muted small center" style="margin-top: 8px;">
-      PayPal supports most cards · USDT has 0 fees · Both are voluntary
+      PayPal supports most cards · One-time, any amount · Both voluntary
     </p>
   </section>
 
@@ -282,28 +284,6 @@
 <script src="data/uklotto.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/app.js"></script>
-<script>
-  function toggleCrypto() {
-    const p = document.getElementById('crypto-panel');
-    if (p) p.style.display = p.style.display === 'none' ? 'block' : 'none';
-  }
-  function copyCrypto() {
-    const el = document.getElementById('crypto-address');
-    if (!el) return;
-    const text = el.textContent;
-    const fb = () => {
-      const ta = document.createElement('textarea');
-      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-      document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); } catch (e) {}
-      document.body.removeChild(ta);
-    };
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).catch(fb);
-    } else fb();
-    if (window.toast) toast('📋 USDT address copied');
-  }
-</script>
 
 <!-- Service Worker (Production only, skipped on localhost) -->
 <script>
