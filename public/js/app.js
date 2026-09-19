@@ -25,11 +25,16 @@
     saved: [],            // [{id, game, gameName, main, extra, extraName, factors:[labels], savedAt}]
     savesToday: 0,        // 今天保存次数
     savesDate: '',        // YYYY-MM-DD (北京时间)，用于跨天重置
+    gensToday: 0,         // 今天生成次数
+    gensDate: '',         // YYYY-MM-DD (北京时间)，用于跨天重置
     isPro: false,         // 付费状态（占位，未来接 StoreKit / Paddle）
+    devMode: false,       // 开发者模式：绕过所有限制（你作为开发者用）
     savedKey: 'luckyPick.saved.v1',
-    limitKey: 'luckyPick.savelimit.v1',
+    saveLimitKey: 'luckyPick.savelimit.v1',
+    genLimitKey: 'luckyPick.genlimit.v1',
   };
-  const FREE_DAILY_LIMIT = 3;
+  const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
+  const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -66,6 +71,13 @@
   function removeFactor(i) { state.factors.splice(i, 1); renderFactors(); saveState(); }
 
   function generate() {
+    // 检查生成限额（devMode / Pro 用户跳过）
+    const status = genLimitStatus();
+    if (!status.canGen) {
+      showUpgradeModal('You\'ve used all ' + FREE_GEN_LIMIT + ' free Generations today.\n\nEach Generate gives you fresh numbers for the next drawing.\n\nUpgrade to Pro for unlimited Generations and Saves.\n\n(Coming to App Store soon — leave your email for early access?)');
+      return;
+    }
+
     const game = state.game;
     const history = state.history[game];
     if (!history || history.length === 0) {
@@ -106,8 +118,15 @@
       }));
     }
 
+    // 生成成功：扣一次（devMode / Pro 跳过）
+    if (!state.isPro && !state.devMode) {
+      state.gensToday++;
+      saveGenLimit();
+    }
+
     state.sets = sets;
     renderResults();
+    renderGenCounter();
     renderRecent();
     saveState();
   }
@@ -503,26 +522,73 @@
   // Save to Library + Daily Limit
   // ============================================================
   function ensureDateRollover() {
+    // 一次性 rollover save + gen（避免两个几乎一样的函数）
     const today = beijingToday();
     if (state.savesDate !== today) {
       state.savesDate = today;
       state.savesToday = 0;
       saveLimit();
     }
+    if (state.gensDate !== today) {
+      state.gensDate = today;
+      state.gensToday = 0;
+      saveGenLimit();
+    }
   }
 
   function saveLimit() {
     try {
-      localStorage.setItem(state.limitKey, JSON.stringify({
+      localStorage.setItem(state.saveLimitKey, JSON.stringify({
         date: state.savesDate,
         count: state.savesToday,
       }));
     } catch (e) {}
   }
 
-  function loadLimit() {
+  function saveGenLimit() {
     try {
-      const s = localStorage.getItem(state.limitKey);
+      localStorage.setItem(state.genLimitKey, JSON.stringify({
+        date: state.gensDate,
+        count: state.gensToday,
+      }));
+    } catch (e) {}
+  }
+
+  function loadGenLimit() {
+    try {
+      const s = localStorage.getItem(state.genLimitKey);
+      if (!s) return;
+      const data = JSON.parse(s);
+      state.gensDate = data.date || '';
+      state.gensToday = Number(data.count) || 0;
+    } catch (e) {}
+  }
+
+  function loadDevMode() {
+    try {
+      state.devMode = localStorage.getItem('luckyPick.devMode') === '1';
+    } catch (e) { state.devMode = false; }
+  }
+
+  function genLimitStatus() {
+    if (state.isPro || state.devMode) return { canGen: true, remaining: 999, isPro: state.isPro, devMode: state.devMode };
+    ensureGenRollover();
+    const remaining = Math.max(0, FREE_GEN_LIMIT - state.gensToday);
+    return { canGen: remaining > 0, remaining, isPro: false };
+  }
+
+  function ensureGenRollover() {
+    const today = beijingToday();
+    if (state.gensDate !== today) {
+      state.gensDate = today;
+      state.gensToday = 0;
+      saveGenLimit();
+    }
+  }
+
+  function loadSaveLimit() {
+    try {
+      const s = localStorage.getItem(state.saveLimitKey);
       if (!s) return;
       const data = JSON.parse(s);
       state.savesDate = data.date || '';
@@ -544,9 +610,9 @@
   }
 
   function saveLimitStatus() {
-    if (state.isPro) return { canSave: true, remaining: 999, isPro: true };
+    if (state.isPro || state.devMode) return { canSave: true, remaining: 999, isPro: state.isPro, devMode: state.devMode };
     ensureDateRollover();
-    const remaining = Math.max(0, FREE_DAILY_LIMIT - state.savesToday);
+    const remaining = Math.max(0, FREE_SAVE_LIMIT - state.savesToday);
     return { canSave: remaining > 0, remaining, isPro: false };
   }
 
@@ -577,7 +643,7 @@
     persistSaved();
     renderSavedNumbers();
     renderResults();  // 重新渲染以便更新按钮状态
-    const left = state.isPro ? '∞' : (FREE_DAILY_LIMIT - state.savesToday);
+    const left = state.isPro ? '∞' : (FREE_SAVE_LIMIT - state.savesToday);
     toast(state.isPro ? '💎 Saved to library' : '💾 Saved · ' + left + ' free saves left today');
   }
 
@@ -673,6 +739,23 @@
       card.appendChild(actions);
       container.appendChild(card);
     });
+  }
+
+  // 在 Generate 按钮上方显示剩余次数
+  function renderGenCounter() {
+    const el = document.getElementById('gen-counter');
+    if (!el) return;
+    const status = genLimitStatus();
+    if (state.isPro) {
+      el.innerHTML = '💎 <b>Pro</b> · Unlimited generations';
+      el.className = 'gen-counter pro';
+    } else if (state.devMode) {
+      el.innerHTML = '🛠 <b>Dev Mode</b> · Unlimited (testing)';
+      el.className = 'gen-counter dev';
+    } else {
+      el.innerHTML = '🎯 <b>' + status.remaining + ' / ' + FREE_GEN_LIMIT + '</b> free Generations today';
+      el.className = 'gen-counter' + (status.remaining === 0 ? ' exhausted' : '');
+    }
   }
 
   function copySetsToClipboardText(text) {
@@ -1009,7 +1092,7 @@
     const mask = $('modal-mask');
     if (mask) mask.addEventListener('click', e => { if (e.target === mask) closeModal(); });
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === state.game));
-    renderFactors(); renderResults(); renderRecent(); renderSavedNumbers(); updateDebug();
+    renderFactors(); renderResults(); renderRecent(); renderSavedNumbers(); renderGenCounter(); updateDebug();
     document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
       updateLastUpdate();
       updateDebug();
@@ -1017,6 +1100,7 @@
     updateLastUpdate();
     updateDebug();
     renderSavedNumbers();
+    renderGenCounter();
 
     // Refresh data 按钮
     const refreshBtn = document.getElementById('refresh-data-btn');

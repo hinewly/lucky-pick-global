@@ -1289,3 +1289,28 @@ header.hero .tagline {
   color: #5b5b5b;
   line-height: 1.5;
 }
+
+/* ========== Generate Counter ========== */
+.gen-counter {
+  font-size: 14px;
+  color: #5b5b5b;
+  padding: 8px 14px;
+  background: #FAF8F5;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  text-align: center;
+  display: inline-block;
+}
+.gen-counter.pro {
+  background: #fff3eb;
+  color: #D97757;
+}
+.gen-counter.dev {
+  background: #f0ebff;
+  color: #6b46c1;
+  border: 1px dashed #6b46c1;
+}
+.gen-counter.exhausted {
+  background: #fdf0ee;
+  color: #c13816;
+}
