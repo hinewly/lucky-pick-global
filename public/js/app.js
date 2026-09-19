@@ -775,21 +775,17 @@
       const val = ($('modal-input').value || '').trim();
       let factor = null;
       try {
-        if (type === 'lucky') {
-          const n = parseSingleNum(val);
-          if (n === null) return alert('Enter a whole number between 1 and 69');
-          if (state.factors.some(f => f.type === 'lucky' && f.data && f.data.includes(n))) {
-            return alert('You already added #' + n + ' to lucky numbers');
+        if (type === 'lucky' || type === 'avoid') {
+          const cfg = Engine.GAMES[state.game];
+          const max = cfg ? cfg.mainRange[1] : 69;
+          const min = cfg ? cfg.mainRange[0] : 1;
+          const n = parseSingleNum(val, min, max);
+          if (n === null) return alert('Enter a whole number between ' + min + ' and ' + max + ' for ' + (cfg ? cfg.name : ''));
+          const typeName = type === 'lucky' ? 'lucky numbers' : 'avoid numbers';
+          if (state.factors.some(f => f.type === type && f.data && f.data.includes(n))) {
+            return alert('You already added #' + n + ' to ' + typeName);
           }
-          factor = Engine.makeLucky([n]);
-        }
-        else if (type === 'avoid') {
-          const n = parseSingleNum(val);
-          if (n === null) return alert('Enter a whole number between 1 and 69');
-          if (state.factors.some(f => f.type === 'avoid' && f.data && f.data.includes(n))) {
-            return alert('You already added #' + n + ' to avoid numbers');
-          }
-          factor = Engine.makeAvoid([n]);
+          factor = type === 'lucky' ? Engine.makeLucky([n]) : Engine.makeAvoid([n]);
         }
         else if (type === 'date') factor = Engine.makeDate(val);
         else if (type === 'zodiac') factor = Engine.makeZodiac(val);
@@ -815,9 +811,11 @@
   function parseNums(s) {
     return s.split(/[\s,,，]+/).map(x => Number(x.trim())).filter(n => Number.isFinite(n));
   }
-  function parseSingleNum(s) {
+  function parseSingleNum(s, min, max) {
+    min = (min == null) ? 1 : min;
+    max = (max == null) ? 69 : max;
     const n = Number(String(s).trim());
-    if (!Number.isFinite(n) || !Number.isInteger(n) || n < 1 || n > 69) return null;
+    if (!Number.isFinite(n) || !Number.isInteger(n) || n < min || n > max) return null;
     return n;
   }
   function closeModal() { $('modal-mask').classList.remove('show'); }
