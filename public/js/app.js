@@ -21,7 +21,23 @@
     language: 'en',
     saveKey: 'luckyPick.global.v1',
     setCount: 3,  // 用户可调: 1 / 3 / 5
+    // === Saved Library + Daily Limit ===
+    saved: [],            // [{id, game, gameName, main, extra, extraName, factors:[labels], savedAt}]
+    savesToday: 0,        // 今天保存次数
+    savesDate: '',        // YYYY-MM-DD (北京时间)，用于跨天重置
+    isPro: false,         // 付费状态（占位，未来接 StoreKit / Paddle）
+    savedKey: 'luckyPick.saved.v1',
+    limitKey: 'luckyPick.savelimit.v1',
   };
+  const FREE_DAILY_LIMIT = 3;
+  // 北京时间今日 (YYYY-MM-DD)
+  function beijingToday() {
+    const d = new Date();
+    // 北京时间 = UTC+8
+    const utcMs = d.getTime() + d.getTimezoneOffset() * 60000;
+    const beijing = new Date(utcMs + 8 * 3600 * 1000);
+    return beijing.toISOString().slice(0, 10);
+  }
 
   // ============================================================
   // Data loading
@@ -183,7 +199,7 @@
       card.appendChild(el('span', { class: 'scheme-tag', text: set.gameName }));
       card.appendChild(el('div', { class: 'meta', text: 'Set ' + (idx + 1) + ' · ' + timeStr }));
       card.appendChild(renderBalls(set));
-      // 操作按钮：复制 + 导出图片
+      // 操作按钮：复制 + 导出图片 + 保存到历史库
       const actions = el('div', { class: 'result-actions' });
       const copyBtn = el('button', {
         class: 'action-btn',
@@ -195,8 +211,17 @@
         'data-set-idx': String(idx),
         onClick: (e) => exportSetAsImage(state.sets[Number(e.currentTarget.dataset.setIdx)]),
       }, ['🖼️ Save image']);
+      // 检查是否已经保存过这组（用 main+extra+game 作为 key）
+      const sig = set.game + ':' + (set.main || []).join(',') + ':' + (set.extra || []).join(',');
+      const alreadySaved = (state.saved || []).some(x => (x.game + ':' + (x.main || []).join(',') + ':' + (x.extra || []).join(',')) === sig);
+      const saveBtn = el('button', {
+        class: 'action-btn' + (alreadySaved ? ' success' : ''),
+        'data-set-idx': String(idx),
+        onClick: (e) => saveSetToLibrary(state.sets[Number(e.currentTarget.dataset.setIdx)]),
+      }, [alreadySaved ? '✓ Saved' : '💾 Save']);
       actions.appendChild(copyBtn);
       actions.appendChild(exportBtn);
+      actions.appendChild(saveBtn);
       card.appendChild(actions);
       container.appendChild(card);
     });
@@ -474,7 +499,208 @@
     _toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
   }
 
-    function renderRecent() {
+    // ============================================================
+  // Save to Library + Daily Limit
+  // ============================================================
+  function ensureDateRollover() {
+    const today = beijingToday();
+    if (state.savesDate !== today) {
+      state.savesDate = today;
+      state.savesToday = 0;
+      saveLimit();
+    }
+  }
+
+  function saveLimit() {
+    try {
+      localStorage.setItem(state.limitKey, JSON.stringify({
+        date: state.savesDate,
+        count: state.savesToday,
+      }));
+    } catch (e) {}
+  }
+
+  function loadLimit() {
+    try {
+      const s = localStorage.getItem(state.limitKey);
+      if (!s) return;
+      const data = JSON.parse(s);
+      state.savesDate = data.date || '';
+      state.savesToday = Number(data.count) || 0;
+    } catch (e) {}
+  }
+
+  function loadSaved() {
+    try {
+      const s = localStorage.getItem(state.savedKey);
+      if (s) state.saved = JSON.parse(s);
+    } catch (e) { state.saved = []; }
+  }
+
+  function persistSaved() {
+    try {
+      localStorage.setItem(state.savedKey, JSON.stringify(state.saved));
+    } catch (e) {}
+  }
+
+  function saveLimitStatus() {
+    if (state.isPro) return { canSave: true, remaining: 999, isPro: true };
+    ensureDateRollover();
+    const remaining = Math.max(0, FREE_DAILY_LIMIT - state.savesToday);
+    return { canSave: remaining > 0, remaining, isPro: false };
+  }
+
+  function saveSetToLibrary(set) {
+    if (!set) return;
+    const status = saveLimitStatus();
+    if (!status.canSave) {
+      showUpgradeModal('You\'ve used all ' + FREE_DAILY_LIMIT + ' free saves today.\n\nUpgrade to Pro for unlimited saves and history across all your devices.\n\n(Coming to App Store soon — leave your email for early access?)');
+      return;
+    }
+    const id = 'sv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    const factorLabels = (state.factors || []).map(f => f.label);
+    const item = {
+      id,
+      game: set.game,
+      gameName: set.gameName,
+      main: (set.main || []).slice(),
+      extra: (set.extra || []).slice(),
+      extraName: set.extraName,
+      factors: factorLabels,
+      savedAt: new Date().toISOString(),
+    };
+    state.saved.unshift(item);
+    if (!state.isPro) {
+      state.savesToday++;
+      saveLimit();
+    }
+    persistSaved();
+    renderSavedNumbers();
+    renderResults();  // 重新渲染以便更新按钮状态
+    const left = state.isPro ? '∞' : (FREE_DAILY_LIMIT - state.savesToday);
+    toast(state.isPro ? '💎 Saved to library' : '💾 Saved · ' + left + ' free saves left today');
+  }
+
+  function removeSaved(id) {
+    state.saved = state.saved.filter(x => x.id !== id);
+    persistSaved();
+    renderSavedNumbers();
+  }
+
+  function showUpgradeModal(msg) {
+    const mask = $('modal-mask');
+    const modal = $('modal');
+    modal.innerHTML = '<h3>⭐ Upgrade to Pro</h3>' +
+      '<p style="white-space:pre-wrap;line-height:1.5;">' + msg + '</p>' +
+      '<div class="pro-pricing">' +
+        '<div class="pro-tier"><b>Starter</b><br/>$12.99<br/><span class="muted small">10 saves</span></div>' +
+        '<div class="pro-tier featured"><b>Standard</b><br/>$29.99<br/><span class="muted small">30 saves</span></div>' +
+        '<div class="pro-tier"><b>Heavy</b><br/>$69.99<br/><span class="muted small">100 saves</span></div>' +
+      '</div>' +
+      '<p class="muted small center">💡 Coming to App Store soon · one-time purchase, no subscription</p>' +
+      '<div class="actions">' +
+        '<button class="cancel" id="modal-cancel">Maybe later</button>' +
+        '<button class="ok" id="modal-ok">Notify me</button>' +
+      '</div>';
+    mask.classList.add('show');
+    $('modal-cancel').onclick = closeModal;
+    $('modal-ok').onclick = () => {
+      const email = prompt('Email (we\'ll only email when Pro launches):');
+      if (email && /^.+@.+\..+$/.test(email)) {
+        try { localStorage.setItem('luckyPick.notifyEmail', email); } catch (e) {}
+        toast('📧 Got it. We\'ll email you when Pro launches.');
+      }
+      closeModal();
+    };
+  }
+
+  function renderSavedNumbers() {
+    const container = $('saved-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const items = state.saved || [];
+    const status = saveLimitStatus();
+    const counterEl = $('save-counter');
+    if (counterEl) {
+      if (state.isPro) {
+        counterEl.innerHTML = '💎 <b>Pro</b> · Unlimited saves';
+        counterEl.className = 'save-counter pro';
+      } else {
+        counterEl.innerHTML = '💎 <b>' + status.remaining + ' / ' + FREE_DAILY_LIMIT + '</b> free saves today';
+        counterEl.className = 'save-counter' + (status.remaining === 0 ? ' exhausted' : '');
+      }
+    }
+    const upgradeBtn = $('upgrade-btn');
+    if (upgradeBtn) upgradeBtn.style.display = state.isPro ? 'none' : '';
+
+    if (items.length === 0) {
+      container.appendChild(el('div', { class: 'muted center saved-empty', text: 'No saved numbers yet. Tap 💾 Save on a generated set to keep it here.' }));
+      return;
+    }
+
+    items.forEach(item => {
+      const card = el('div', { class: 'saved-card' });
+      const head = el('div', { class: 'saved-head' }, [
+        el('span', { class: 'saved-date', text: new Date(item.savedAt).toLocaleString() }),
+        el('span', { class: 'scheme-tag', text: item.gameName }),
+      ]);
+      card.appendChild(head);
+
+      const balls = el('div', { class: 'balls' });
+      (item.main || []).forEach(n => balls.appendChild(el('span', { class: 'ball main', text: String(n).padStart(2, '0') })));
+      balls.appendChild(el('span', { class: 'ball divider', text: '|' }));
+      (item.extra || []).forEach(n => balls.appendChild(el('span', { class: 'ball extra', text: String(n).padStart(2, '0') })));
+      card.appendChild(balls);
+
+      if (item.factors && item.factors.length) {
+        card.appendChild(el('div', { class: 'saved-factors muted small', text: 'Factors: ' + item.factors.join(' · ') }));
+      }
+
+      const actions = el('div', { class: 'result-actions' });
+      actions.appendChild(el('button', {
+        class: 'action-btn',
+        onClick: () => copySetsToClipboardText(formatSetsText([item])),
+      }, ['📋 Copy']));
+      actions.appendChild(el('button', {
+        class: 'action-btn',
+        onClick: () => exportSingleSavedAsImage(item),
+      }, ['🖼️ Image']));
+      actions.appendChild(el('button', {
+        class: 'action-btn danger',
+        onClick: () => { if (confirm('Remove from library?')) removeSaved(item.id); },
+      }, ['🗑️']));
+      card.appendChild(actions);
+      container.appendChild(card);
+    });
+  }
+
+  function copySetsToClipboardText(text) {
+    const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else fallback();
+    toast('📋 Copied');
+  }
+
+  function exportSingleSavedAsImage(item) {
+    const set = {
+      game: item.game,
+      gameName: item.gameName,
+      main: item.main,
+      extra: item.extra,
+      extraName: item.extraName,
+    };
+    exportSetsAsImage([set]);
+  }
+
+  function renderRecent() {
     const container = $('freq');
     if (!container) return;
     container.innerHTML = '';
@@ -728,7 +954,7 @@
         if (g && Engine.GAMES[g]) {
           state.game = g;
           document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === g));
-          renderFactors(); renderResults(); renderRecent(); saveState(); updateDebug();
+          renderFactors(); renderResults(); renderRecent(); renderSavedNumbers(); saveState(); updateDebug();
         }
       });
     });
@@ -740,13 +966,14 @@
     const mask = $('modal-mask');
     if (mask) mask.addEventListener('click', e => { if (e.target === mask) closeModal(); });
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === state.game));
-    renderFactors(); renderResults(); renderRecent(); updateDebug();
+    renderFactors(); renderResults(); renderRecent(); renderSavedNumbers(); updateDebug();
     document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
       updateLastUpdate();
       updateDebug();
     }));
     updateLastUpdate();
     updateDebug();
+    renderSavedNumbers();
 
     // Refresh data 按钮
     const refreshBtn = document.getElementById('refresh-data-btn');
