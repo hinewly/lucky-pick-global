@@ -72,7 +72,16 @@ Each set is generated independently. The algorithm does **not** improve winning 
 
 ### Update Historical Data
 
-Manually update `public/data/powerball.js` and `public/data/megamillions.js`:
+Each game ships with ~50 recent draws from [lotteryusa.com](https://www.lotteryusa.com/) (auto-fetched).
+
+To refresh the data:
+
+```bash
+node src/fetch_global.mjs
+# then bump CACHE_VERSION in public/service-worker.js and commit
+```
+
+Data files (`public/data/powerball.js`, `public/data/megamillions.js`) are in `[newest, ..., oldest]` order, with shape:
 
 ```js
 window.POWERBALL = [
@@ -80,10 +89,6 @@ window.POWERBALL = [
   // ...
 ];
 ```
-
-To fetch latest draws, see:
-- https://www.powerball.com/
-- https://www.megamillions.com/
 
 ### Deploy
 
