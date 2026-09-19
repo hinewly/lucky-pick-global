@@ -20,6 +20,7 @@
     history: { powerball: [], megamillions: [] },
     language: 'en',
     saveKey: 'luckyPick.global.v1',
+    setCount: 3,  // 用户可调: 1 / 3 / 5
   };
 
   // ============================================================
@@ -72,7 +73,7 @@
 
     let sets = [];
     try {
-      sets = Engine.generate(game, expandedFactors, history, { count: 3, lookback: 50 });
+      sets = Engine.generate(game, expandedFactors, history, { count: state.setCount, lookback: 50 });
     } catch (err) {
       console.error('Generation failed:', err);
       alert('Failed to generate numbers: ' + err.message);
@@ -157,6 +158,26 @@
     const now = new Date();
     const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
 
+    // 顶部全局工具栏（仅当有结果时显示）
+    const toolbar = el('div', { class: 'result-toolbar' });
+    const copyAllBtn = el('button', { class: 'toolbar-btn primary', onClick: () => copyAllToClipboard() }, ['📋 Copy all']);
+    const saveAllBtn = el('button', { class: 'toolbar-btn primary', onClick: () => exportAllAsImage() }, ['🖼️ Save all as image']);
+    toolbar.appendChild(copyAllBtn);
+    toolbar.appendChild(saveAllBtn);
+
+    // 组数切换
+    const countWrap = el('div', { class: 'set-count-wrap' });
+    countWrap.appendChild(el('span', { class: 'set-count-label', text: 'Sets:' }));
+    [1, 3, 5].forEach(n => {
+      const c = el('button', {
+        class: 'set-count-btn' + (state.setCount === n ? ' active' : ''),
+        onClick: () => { state.setCount = n; saveState(); renderResults(); },
+      }, [String(n)]);
+      countWrap.appendChild(c);
+    });
+    toolbar.appendChild(countWrap);
+    container.appendChild(toolbar);
+
     state.sets.forEach((set, idx) => {
       const card = el('div', { class: 'result-card fade-in' });
       card.appendChild(el('span', { class: 'scheme-tag', text: set.gameName }));
@@ -192,15 +213,47 @@
   // ============================================================
   // Copy & Export
   // ============================================================
-  function formatSetText(set) {
-    const main = (set.main || []).map(n => String(n).padStart(2, '0')).join(' - ');
-    const extra = (set.extra || []).map(n => String(n).padStart(2, '0')).join(' - ');
-    return set.gameName + ' · ' + new Date().toLocaleDateString() + '\n' + main + '\n' + set.extraName + ': ' + extra;
+  function formatSetsText(sets) {
+    if (!sets || !sets.length) return '';
+    const game = sets[0].gameName;
+    const date = new Date().toLocaleDateString();
+    const lines = [game + ' · ' + date + ' · ' + sets.length + ' sets'];
+    sets.forEach((s, i) => {
+      const main = (s.main || []).map(n => String(n).padStart(2, '0')).join(' - ');
+      const extra = (s.extra || []).map(n => String(n).padStart(2, '0')).join(' - ');
+      lines.push('');
+      lines.push('Set ' + (i + 1) + ':');
+      lines.push(main);
+      lines.push(s.extraName + ': ' + extra);
+    });
+    return lines.join('\n');
   }
 
+  function copyAllToClipboard() {
+    if (!state.sets || !state.sets.length) return;
+    const text = formatSetsText(state.sets);
+    const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else {
+      fallback();
+    }
+    toast('📋 ' + state.sets.length + ' sets copied to clipboard');
+  }
+
+  // 保留旧的 per-set 复制（兼容 per-set 按钮）
   function copySetToClipboard(set) {
     if (!set) return;
-    const text = formatSetText(set);
+    const text = formatSetsText([set]);
     const fallback = () => {
         const ta = document.createElement('textarea');
         ta.value = text;
@@ -219,9 +272,20 @@
     toast('📋 Copied to clipboard');
   }
 
+  function exportAllAsImage() {
+    if (!state.sets || !state.sets.length) return;
+    return exportSetsAsImage(state.sets);
+  }
+
   function exportSetAsImage(set) {
-    if (!set) return;
-    const W = 800, H = 800;
+    return exportSetsAsImage([set]);
+  }
+
+  function exportSetsAsImage(sets) {
+    if (!sets || !sets.length) return;
+    const isMulti = sets.length > 1;
+    const W = 800;
+    const H = isMulti ? (300 + sets.length * 220) : 800;
     const c = document.createElement('canvas');
     c.width = W; c.height = H;
     const ctx = c.getContext('2d');
@@ -238,43 +302,69 @@
     ctx.fillStyle = '#fff';
     ctx.textAlign = 'center';
     ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('LuckyPick', W/2, 90);
+    ctx.fillText('LuckyPick', W/2, isMulti ? 70 : 90);
 
     // 游戏名
-    ctx.font = 'bold 38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText(set.gameName, W/2, 150);
+    ctx.font = 'bold ' + (isMulti ? 30 : 38) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(sets[0].gameName + (isMulti ? ' · ' + sets.length + ' sets' : ''), W/2, isMulti ? 115 : 150);
 
     // 日期
-    ctx.font = '24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.font = (isMulti ? 18 : 24) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.fillText(new Date().toLocaleString(), W/2, 195);
+    ctx.fillText(new Date().toLocaleString(), W/2, isMulti ? 150 : 195);
 
-    // 主球
+    // 每个 set 一行（多 set）或居中大图（单 set）
+    if (isMulti) {
+      drawMultiSetBalls(ctx, sets, W, H);
+    } else {
+      drawSingleSetBalls(ctx, sets[0], W, H);
+    }
+
+    // 底部 disclaimer
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = 'italic ' + (isMulti ? 14 : 18) + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText('For entertainment only · Not affiliated with any lottery operator', W/2, H - 30);
+
+    // 触发下载
+    try {
+      c.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'luckypick-' + set.gameName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast('🖼️ ' + sets.length + (sets.length > 1 ? ' sets' : ' set') + ' saved as image');
+      }, 'image/png');
+    } catch (e) {
+      alert('Export failed: ' + e.message);
+    }
+  }
+
+  function drawSingleSetBalls(ctx, set, W, H) {
     const ballR = 60;
     const mainY = 380;
     const gap = 110;
     const totalW = (set.main.length - 1) * gap;
-    const startX = (W - totalW) / 2 - 40; // 留出彩球空间
+    const startX = (W - totalW) / 2 - 40;
     (set.main || []).forEach((n, i) => {
       const x = startX + i * gap;
-      // 阴影
       ctx.beginPath();
       ctx.arc(x, mainY + 4, ballR, 0, Math.PI * 2);
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       ctx.fill();
-      // 球
       ctx.beginPath();
       ctx.arc(x, mainY, ballR, 0, Math.PI * 2);
       ctx.fillStyle = '#fff';
       ctx.fill();
-      // 数字
       ctx.fillStyle = '#D97757';
       ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       ctx.textBaseline = 'middle';
       ctx.fillText(String(n).padStart(2, '0'), x, mainY);
     });
-
-    // 彩球（独立的 Powerball / Mega Ball）
     const pbX = startX + set.main.length * gap;
     if (set.extra && set.extra.length) {
       const en = set.extra[0];
@@ -289,48 +379,83 @@
       ctx.fillStyle = '#fff';
       ctx.fillText(String(en).padStart(2, '0'), pbX, mainY);
     }
-
-    // 分隔符
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
     ctx.fillText(set.extraName, pbX, mainY + ballR + 35);
 
-    // 因子（如有）
+    // 因子
     if (state.factors && state.factors.length) {
       ctx.fillStyle = 'rgba(255,255,255,0.92)';
       ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       const labels = state.factors.map(f => f.label).join('  ·  ');
       const maxLabelW = W - 80;
       let display = labels;
-      // 简单截断
       while (ctx.measureText(display).width > maxLabelW && display.length > 10) {
         display = display.slice(0, -1);
       }
       if (display.length < labels.length) display = display.slice(0, -1) + '…';
       ctx.fillText(display, W/2, 620);
     }
+  }
 
-    // 底部 disclaimer
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.font = 'italic 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-    ctx.fillText('For entertainment only · Not affiliated with any lottery operator', W/2, 720);
+  function drawMultiSetBalls(ctx, sets, W, H) {
+    const ballR = 36;
+    const gap = 70;
+    const startY = 200;
+    const rowH = 220;
+    sets.forEach((set, idx) => {
+      const y = startY + idx * rowH + ballR;
+      const totalW = (set.main.length - 1) * gap;
+      const startX = (W - totalW) / 2 - 30;
+      // 行标签
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Set ' + (idx + 1), 30, y + 8);
+      ctx.textAlign = 'center';
 
-    // 触发下载
-    try {
-      c.toBlob((blob) => {
-        if (!blob) return;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'luckypick-' + set.gameName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + '.png';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-        toast('🖼️ Image saved');
-      }, 'image/png');
-    } catch (e) {
-      alert('Export failed: ' + e.message);
+      (set.main || []).forEach((n, i) => {
+        const x = startX + i * gap;
+        ctx.beginPath();
+        ctx.arc(x, y + 3, ballR, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.15)';
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(x, y, ballR, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+        ctx.fillStyle = '#D97757';
+        ctx.font = 'bold 30px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(String(n).padStart(2, '0'), x, y);
+      });
+      const pbX = startX + set.main.length * gap;
+      if (set.extra && set.extra.length) {
+        const en = set.extra[0];
+        ctx.beginPath();
+        ctx.arc(pbX, y, ballR, 0, Math.PI * 2);
+        ctx.fillStyle = '#D97757';
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.fillText(String(en).padStart(2, '0'), pbX, y);
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        ctx.fillText(set.extraName, pbX, y + ballR + 18);
+      }
+    });
+
+    // 因子（多 set 时只显示一次在底部）
+    if (state.factors && state.factors.length) {
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.font = '16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const labels = state.factors.map(f => f.label).join('  ·  ');
+      const maxLabelW = W - 80;
+      let display = labels;
+      while (ctx.measureText(display).width > maxLabelW && display.length > 10) {
+        display = display.slice(0, -1);
+      }
+      if (display.length < labels.length) display = display.slice(0, -1) + '…';
+      ctx.fillText(display, W/2, H - 55);
     }
   }
 
@@ -460,6 +585,7 @@
       localStorage.setItem(state.saveKey, JSON.stringify({
         factors: state.factors.map(f => ({ type: f.type, label: f.label, weight: f.weight, data: f.data })),
         game: state.game,
+        setCount: state.setCount,
       }));
     } catch (e) {}
   }
@@ -470,6 +596,7 @@
       if (!s) return;
       const data = JSON.parse(s);
       state.game = data.game || 'powerball';
+      state.setCount = data.setCount || 3;
       if (Array.isArray(data.factors)) {
         state.factors = data.factors.map(rebuildFactor).filter(Boolean);
       }
