@@ -1,21 +1,21 @@
-const CACHE_VERSION = 'v11';
+const CACHE_VERSION = 'v12';
 const CACHE_NAME = 'lucky-pick-global-' + CACHE_VERSION;
 const PRECACHE_URLS = [
-  './?v=11',
-  'index.html?v=11',
-  'manifest.json?v=11',
-  'css/styles.css?v=11',
-  'js/engine.js?v=11',
-  'js/app.js?v=11',
-  'icons/icon.svg?v=11',
-  'data/powerball.js?v=11',
-  'data/megamillions.js?v=11',
+  './?v=12',
+  'index.html?v=12',
+  'manifest.json?v=12',
+  'css/styles.css?v=12',
+  'js/engine.js?v=12',
+  'js/app.js?v=12',
+  'icons/icon.svg?v=12',
+  'data/powerball.js?v=12',
+  'data/megamillions.js?v=12',
 ];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(PRECACHE_URLS.map(u => u.replace('?v=11', ''))))
+      .then(cache => cache.addAll(PRECACHE_URLS.map(u => u.replace('?v=12', ''))))
       .then(() => self.skipWaiting())
   );
 });
