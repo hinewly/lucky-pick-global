@@ -570,26 +570,56 @@
     } catch (e) { state.devMode = false; }
   }
 
-  // 隐藏的开发者快捷入口：通过 URL hash 切换 dev mode
-  // 访问 https://.../#/super     → 开
-  // 访问 https://.../#/super-off → 关
+  // 隐藏的开发者快捷入口：通过 URL 切换 dev mode
+  // 方式 1 (hash)：  https://.../#/super       → 开   (有些浏览器会自动剥)
+  // 方式 2 (query)：https://.../?dev=1        → 开   (更稳)
+  // 方式 1 (hash)：  https://.../#/super-off  → 关
+  // 方式 2 (query)：https://.../?dev=0        → 关
   // 只在客户端生效，不发服务器请求，其他用户不会知道
   function checkDevModeShortcut() {
-    const hash = (location.hash || '').toLowerCase();
     let changed = false;
+    const hash = (location.hash || '').toLowerCase();
+    let cleanHash = hash;
+    let cleanSearch = location.search;
+
+    // 方式 1: hash routing
     if (hash === '#/super' || hash === '#/super-on') {
       try { localStorage.setItem('luckyPick.devMode', '1'); } catch (e) {}
       state.devMode = true;
+      cleanHash = '';
       changed = true;
     } else if (hash === '#/super-off') {
       try { localStorage.removeItem('luckyPick.devMode'); } catch (e) {}
       state.devMode = false;
+      cleanHash = '';
       changed = true;
     }
+
+    // 方式 2: query string (?dev=1 / ?dev=0)
+    // 用 URLSearchParams 解析，能正确处理 ?dev=1&other=2 这种
+    try {
+      const params = new URLSearchParams(location.search);
+      const dev = params.get('dev');
+      if (dev === '1') {
+        try { localStorage.setItem('luckyPick.devMode', '1'); } catch (e) {}
+        state.devMode = true;
+        params.delete('dev');
+        changed = true;
+      } else if (dev === '0') {
+        try { localStorage.removeItem('luckyPick.devMode'); } catch (e) {}
+        state.devMode = false;
+        params.delete('dev');
+        changed = true;
+      }
+      const qs = params.toString();
+      cleanSearch = qs ? '?' + qs : '';
+    } catch (e) { /* URLSearchParams 不可用，忽略 */ }
+
     if (changed) {
-      // 清掉 hash，URL 变干净
+      // 清掉 hash 和 query 里 dev=*，URL 变干净
       try {
-        history.replaceState(null, '', location.pathname + location.search);
+        const newUrl = location.pathname + cleanSearch + cleanHash;
+        history.replaceState(null, '', newUrl);
       } catch (e) {}
       return true;
     }
