@@ -740,8 +740,8 @@
 
     let body = '';
     if (type === 'lucky' || type === 'avoid') {
-      body = `<label>Numbers (separated by spaces or commas)</label>
-              <input type="text" id="modal-input" placeholder="e.g. 7 18 or 7,18" />`;
+      // 极简：只放输入框，详细说明在底下的 help details
+      body = '<input type="text" id="modal-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="Any digits, up to 9" autocomplete="off" />';
     } else if (type === 'date') {
       body = `<label>Date</label>
               <input type="date" id="modal-input" value="${new Date().toISOString().slice(0,10)}" />`;
