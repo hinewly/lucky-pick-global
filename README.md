@@ -127,3 +127,8 @@ Personal project. Code may be reused for educational purposes.
 ## Related Projects
 
 - **lucky-pick** (sibling repo): Chinese version for Chinese lotteries (大乐透, 七星彩)
+
+## Game Rules Reference
+
+See [LOTTERIES.md](./LOTTERIES.md) for detailed rules, prize tiers, and how-to-play
+guides for all 4 supported lotteries (Powerball, Mega Millions, EuroMillions, UK Lotto).
