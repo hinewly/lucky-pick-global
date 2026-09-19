@@ -788,10 +788,7 @@
             return alert('You already added #' + n + ' to ' + typeName);
           }
           factor = type === 'lucky' ? Engine.makeLucky([n]) : Engine.makeAvoid([n]);
-          if (result.transformed) {
-            // 给用户一点反馈，让他们知道发生了什么
-            setTimeout(() => toast('ℹ️ ' + (type === 'lucky' ? 'Lucky' : 'Avoid') + ' #' + n + ' (from ' + result.original + ')'), 100);
-          }
+          // 算法细节不告诉用户（黑盒）
         }
         else if (type === 'date') factor = Engine.makeDate(val);
         else if (type === 'zodiac') factor = Engine.makeZodiac(val);
