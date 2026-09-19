@@ -570,6 +570,32 @@
     } catch (e) { state.devMode = false; }
   }
 
+  // 隐藏的开发者快捷入口：通过 URL hash 切换 dev mode
+  // 访问 https://.../#/super     → 开
+  // 访问 https://.../#/super-off → 关
+  // 只在客户端生效，不发服务器请求，其他用户不会知道
+  function checkDevModeShortcut() {
+    const hash = (location.hash || '').toLowerCase();
+    let changed = false;
+    if (hash === '#/super' || hash === '#/super-on') {
+      try { localStorage.setItem('luckyPick.devMode', '1'); } catch (e) {}
+      state.devMode = true;
+      changed = true;
+    } else if (hash === '#/super-off') {
+      try { localStorage.removeItem('luckyPick.devMode'); } catch (e) {}
+      state.devMode = false;
+      changed = true;
+    }
+    if (changed) {
+      // 清掉 hash，URL 变干净
+      try {
+        history.replaceState(null, '', location.pathname + location.search);
+      } catch (e) {}
+      return true;
+    }
+    return false;
+  }
+
   function genLimitStatus() {
     if (state.isPro || state.devMode) return { canGen: true, remaining: 999, isPro: state.isPro, devMode: state.devMode };
     ensureGenRollover();
