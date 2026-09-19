@@ -55,14 +55,40 @@
       alert('No historical data available for this game yet.');
       return;
     }
+    // 歌词因子：每次 Generate 用 text + 当前时间生成新号码 → 直接覆盖生成结果
+    // （不是 bias，是 hard-set——用户输入一段话，就期待看到"对应"的号码）
+    let lyricsOverride = null;
+    const expandedFactors = [];
+    for (const f of state.factors) {
+      if (f.type === 'lyrics' && f.data && f.data.text) {
+        const fresh = Engine.lyricsToNumbers(f.data.text, game);
+        if (fresh.main && fresh.main.length) {
+          lyricsOverride = fresh;
+        }
+      } else {
+        expandedFactors.push(f);
+      }
+    }
+
     let sets = [];
     try {
-      sets = Engine.generate(game, state.factors, history, { count: 3, lookback: 50 });
+      sets = Engine.generate(game, expandedFactors, history, { count: 3, lookback: 50 });
     } catch (err) {
       console.error('Generation failed:', err);
       alert('Failed to generate numbers: ' + err.message);
       return;
     }
+    // 歌词因子 hard-override：每个 set 用歌词生成的号码替换
+    if (lyricsOverride) {
+      sets = sets.map(s => ({
+        game: s.game,
+        gameName: s.gameName,
+        main: lyricsOverride.main.slice(),
+        extra: lyricsOverride.extra.slice(),
+        extraName: s.extraName,
+      }));
+    }
+
     state.sets = sets;
     renderResults();
     renderRecent();
@@ -136,6 +162,21 @@
       card.appendChild(el('span', { class: 'scheme-tag', text: set.gameName }));
       card.appendChild(el('div', { class: 'meta', text: 'Set ' + (idx + 1) + ' · ' + timeStr }));
       card.appendChild(renderBalls(set));
+      // 操作按钮：复制 + 导出图片
+      const actions = el('div', { class: 'result-actions' });
+      const copyBtn = el('button', {
+        class: 'action-btn',
+        'data-set-idx': String(idx),
+        onClick: (e) => copySetToClipboard(state.sets[Number(e.currentTarget.dataset.setIdx)]),
+      }, ['📋 Copy']);
+      const exportBtn = el('button', {
+        class: 'action-btn',
+        'data-set-idx': String(idx),
+        onClick: (e) => exportSetAsImage(state.sets[Number(e.currentTarget.dataset.setIdx)]),
+      }, ['🖼️ Save image']);
+      actions.appendChild(copyBtn);
+      actions.appendChild(exportBtn);
+      card.appendChild(actions);
       container.appendChild(card);
     });
   }
@@ -148,7 +189,167 @@
     return wrap;
   }
 
-  function renderRecent() {
+  // ============================================================
+  // Copy & Export
+  // ============================================================
+  function formatSetText(set) {
+    const main = (set.main || []).map(n => String(n).padStart(2, '0')).join(' - ');
+    const extra = (set.extra || []).map(n => String(n).padStart(2, '0')).join(' - ');
+    return set.gameName + ' · ' + new Date().toLocaleDateString() + '\n' + main + '\n' + set.extraName + ': ' + extra;
+  }
+
+  function copySetToClipboard(set) {
+    if (!set) return;
+    const text = formatSetText(set);
+    const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else {
+      fallback();
+    }
+    toast('📋 Copied to clipboard');
+  }
+
+  function exportSetAsImage(set) {
+    if (!set) return;
+    const W = 800, H = 800;
+    const c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const ctx = c.getContext('2d');
+
+    // 背景渐变
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#D97757');
+    g.addColorStop(0.5, '#E89775');
+    g.addColorStop(1, '#FAF8F5');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    // 标题
+    ctx.fillStyle = '#fff';
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText('LuckyPick', W/2, 90);
+
+    // 游戏名
+    ctx.font = 'bold 38px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(set.gameName, W/2, 150);
+
+    // 日期
+    ctx.font = '24px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText(new Date().toLocaleString(), W/2, 195);
+
+    // 主球
+    const ballR = 60;
+    const mainY = 380;
+    const gap = 110;
+    const totalW = (set.main.length - 1) * gap;
+    const startX = (W - totalW) / 2 - 40; // 留出彩球空间
+    (set.main || []).forEach((n, i) => {
+      const x = startX + i * gap;
+      // 阴影
+      ctx.beginPath();
+      ctx.arc(x, mainY + 4, ballR, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fill();
+      // 球
+      ctx.beginPath();
+      ctx.arc(x, mainY, ballR, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      // 数字
+      ctx.fillStyle = '#D97757';
+      ctx.font = 'bold 56px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(n).padStart(2, '0'), x, mainY);
+    });
+
+    // 彩球（独立的 Powerball / Mega Ball）
+    const pbX = startX + set.main.length * gap;
+    if (set.extra && set.extra.length) {
+      const en = set.extra[0];
+      ctx.beginPath();
+      ctx.arc(pbX + 4, mainY + 4, ballR, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(pbX, mainY, ballR, 0, Math.PI * 2);
+      ctx.fillStyle = '#D97757';
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.fillText(String(en).padStart(2, '0'), pbX, mainY);
+    }
+
+    // 分隔符
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText(set.extraName, pbX, mainY + ballR + 35);
+
+    // 因子（如有）
+    if (state.factors && state.factors.length) {
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.font = '20px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+      const labels = state.factors.map(f => f.label).join('  ·  ');
+      const maxLabelW = W - 80;
+      let display = labels;
+      // 简单截断
+      while (ctx.measureText(display).width > maxLabelW && display.length > 10) {
+        display = display.slice(0, -1);
+      }
+      if (display.length < labels.length) display = display.slice(0, -1) + '…';
+      ctx.fillText(display, W/2, 620);
+    }
+
+    // 底部 disclaimer
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = 'italic 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+    ctx.fillText('For entertainment only · Not affiliated with any lottery operator', W/2, 720);
+
+    // 触发下载
+    try {
+      c.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'luckypick-' + set.gameName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + '.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        toast('🖼️ Image saved');
+      }, 'image/png');
+    } catch (e) {
+      alert('Export failed: ' + e.message);
+    }
+  }
+
+  let _toastTimer = null;
+  function toast(msg) {
+    let t = document.getElementById('lp-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'lp-toast';
+      t.className = 'lp-toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('show');
+    if (_toastTimer) clearTimeout(_toastTimer);
+    _toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
+  }
+
+    function renderRecent() {
     const container = $('freq');
     if (!container) return;
     container.innerHTML = '';
@@ -205,6 +406,10 @@
     } else if (type === 'lifepath') {
       body = `<label>Birthday (used for Life Path Number)</label>
               <input type="date" id="modal-input" value="1990-01-01" />`;
+    } else if (type === 'lyrics') {
+      body = `<label>Lyric / phrase (anything that means something to you right now)</label>
+              <textarea id="modal-input" rows="3" placeholder="e.g. hello darkness my old friend&#10;or a sentence, a thought, anything"></textarea>
+              <p class="muted small">Tip: same text at a different moment will give different numbers.</p>`;
     }
 
     modal.innerHTML = `<h3>Add ${title(type)}</h3>${body}
@@ -225,13 +430,22 @@
         else if (type === 'zodiac') factor = Engine.makeZodiac(val);
         else if (type === 'dream') { const kws = val.split(/\s+/).filter(Boolean); if (!kws.length) return alert('Enter at least one symbol'); factor = Engine.makeDream(kws); }
         else if (type === 'lifepath') factor = Engine.makeLifePath(val);
+        else if (type === 'lyrics') { if (!val || val.length < 2) return alert('Type at least 2 characters'); factor = Engine.makeLyrics(val); }
       } catch (e) { return alert('Parse error: ' + e.message); }
       if (factor) { addFactor(factor); closeModal(); }
     };
   }
 
   function title(type) {
-    return { lucky: 'Lucky Numbers', avoid: 'Avoid Numbers', date: 'Date', zodiac: 'Zodiac Sign', dream: 'Dream Symbol', lifepath: 'Life Path Number' }[type] || 'Factor';
+    return {
+      lucky: 'Lucky Numbers',
+      avoid: 'Avoid Numbers',
+      date: 'Date',
+      zodiac: 'Zodiac Sign',
+      dream: 'Dream Symbol',
+      lifepath: 'Life Path Number',
+      lyrics: 'Lyric / Phrase'
+    }[type] || 'Factor';
   }
   function parseNums(s) {
     return s.split(/[\s,,，]+/).map(x => Number(x.trim())).filter(n => Number.isFinite(n));
@@ -274,6 +488,7 @@
         d.setFullYear(Math.floor(f.data.lifePathNumber), 0, 1);
         return Engine.makeLifePath(d, f.weight);
       }
+      if (f.type === 'lyrics') return Engine.makeLyrics(f.data.text, f.weight);
     } catch (e) { return null; }
     return null;
   }

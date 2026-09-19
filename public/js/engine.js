@@ -335,6 +335,89 @@
     return Number(Object.keys(weights).slice(-1)[0]);
   }
 
+
+  // ============================================================
+  // Lyrics / phrase factor (black-box, time-based)
+  // ============================================================
+  //
+  // 用户输入一段歌词 / 一句话 / 一个短语。
+  // 算法内部用 (text + timestamp + random salt) → 哈希 → 选号。
+  // 用户看不到公式，也没法反推。
+  // 同一段话不同时刻生成不同号码。
+  //
+
+  function djb2(str) {
+    let h = 5381;
+    for (let i = 0; i < str.length; i++) {
+      h = ((h << 5) + h + str.charCodeAt(i)) | 0;
+    }
+    return h;
+  }
+
+  /**
+   * 从一段文字 + 当前时刻生成一组号码（黑盒算法）。
+   * @param {string} text 用户输入的文字
+   * @param {string} game 'powerball' | 'megamillions'
+   * @returns {{ main: number[], extra: number[] }}
+   */
+  function lyricsToNumbers(text, game) {
+    const cfg = GAMES[game];
+    if (!cfg || !text) return { main: [], extra: [] };
+
+    // 1. 盐：text + 毫秒时间戳 + 随机串
+    const seed = String(text) + '|' + Date.now() + '|' + Math.random().toString(36).slice(2, 10);
+
+    // 2. djb2 哈希 → 32-bit 整数
+    let h = djb2(seed);
+
+    // 3. LCG 推进 + mod 主区范围，选 5 个不重复的
+    const mainMin = cfg.mainRange[0];
+    const mainMax = cfg.mainRange[1];
+    const mainCount = cfg.mainCount;
+    const main = [];
+    let attempts = 0;
+    while (main.length < mainCount && attempts < 100) {
+      h = (h * 1103515245 + 12345) | 0;
+      const n = (Math.abs(h) % (mainMax - mainMin + 1)) + mainMin;
+      if (!main.includes(n)) main.push(n);
+      attempts++;
+    }
+    while (main.length < mainCount) {
+      // 极端兜底
+      const n = Math.floor(Math.random() * (mainMax - mainMin + 1)) + mainMin;
+      if (!main.includes(n)) main.push(n);
+    }
+    main.sort((a, b) => a - b);
+
+    // 4. 彩球：换一种哈希混合
+    const extraMin = cfg.extraRange[0];
+    const extraMax = cfg.extraRange[1];
+    const extraCount = cfg.extraCount;
+    const pbSeed = djb2(seed + '|extra');
+    let ph = pbSeed;
+    const extra = [];
+    for (let i = 0; i < extraCount; i++) {
+      ph = (ph * 1103515245 + 12345) | 0;
+      const n = (Math.abs(ph) % (extraMax - extraMin + 1)) + extraMin;
+      extra.push(n);
+    }
+
+    return { main, extra };
+  }
+
+  function makeLyrics(text, weight = 0.8) {
+    const clean = String(text || '').trim();
+    const display = clean.length > 22 ? clean.slice(0, 20) + '...' : clean;
+    return {
+      type: 'lyrics',
+      label: '🎵 \u201C' + display + '\u201D',
+      weight,
+      data: { text: clean },
+      // contains 在 generate 时由 app.js 动态注入 fresh 数字
+      contains: () => false,
+    };
+  }
+
   // ============================================================
   // Generate
   // ============================================================
@@ -422,6 +505,8 @@
     makeZodiac,
     makeDream,
     makeLifePath,
+    makeLyrics,
+    lyricsToNumbers,
     inferZodiac,
     lifePathNumber,
     parseDate,
@@ -436,7 +521,7 @@
     meta: {
       version: '1.0.0',
       games: Object.keys(GAMES),
-      factorTypes: ['lucky', 'avoid', 'date', 'zodiac', 'dream', 'lifepath'],
+      factorTypes: ['lucky', 'avoid', 'date', 'zodiac', 'dream', 'lifepath', 'lyrics'],
       description: 'LuckyPick Global - Powerball & Mega Millions lucky number picker',
     },
   };
