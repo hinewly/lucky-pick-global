@@ -17,7 +17,7 @@
     game: 'powerball',
     factors: [],
     sets: [],
-    history: { powerball: [], megamillions: [] },
+    history: { powerball: [], megamillions: [], euromillions: [], uklotto: [] },
     language: 'en',
     saveKey: 'luckyPick.global.v1',
     setCount: 3,  // 用户可调: 1 / 3 / 5
@@ -53,6 +53,12 @@
     }
     if (global.MEGAMILLIONS && Array.isArray(global.MEGAMILLIONS)) {
       state.history.megamillions = normalize(global.MEGAMILLIONS);
+    }
+    if (global.EUROMILLIONS && Array.isArray(global.EUROMILLIONS)) {
+      state.history.euromillions = normalize(global.EUROMILLIONS);
+    }
+    if (global.UKLOTTO && Array.isArray(global.UKLOTTO)) {
+      state.history.uklotto = normalize(global.UKLOTTO);
     }
   }
 

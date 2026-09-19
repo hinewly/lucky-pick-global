@@ -1314,3 +1314,65 @@ header.hero .tagline {
   background: #fdf0ee;
   color: #c13816;
 }
+
+/* ========== Game Tabs (with flags) ========== */
+.tab .flag {
+  margin-right: 4px;
+  font-size: 14px;
+}
+
+/* ========== USDT / Crypto Tip ========== */
+.crypto-btn {
+  display: inline-block;
+  padding: 10px 16px;
+  font-size: 14px;
+  background: #fff;
+  color: #1f8a70;
+  border: 1.5px solid #1f8a70;
+  border-radius: 22px;
+  cursor: pointer;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.crypto-btn:hover {
+  background: #1f8a70;
+  color: #fff;
+  transform: translateY(-1px);
+}
+.crypto-panel {
+  margin-top: 12px;
+  padding: 14px;
+  background: #f0f9f5;
+  border: 1px solid #1f8a70;
+  border-radius: 12px;
+}
+.crypto-address {
+  display: block;
+  padding: 10px;
+  margin: 8px 0;
+  background: #fff;
+  border: 1px dashed #1f8a70;
+  border-radius: 8px;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 13px;
+  word-break: break-all;
+  text-align: center;
+  color: #1f8a70;
+  cursor: pointer;
+  user-select: all;
+}
+.copy-btn {
+  padding: 6px 12px;
+  background: #1f8a70;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+.copy-btn:hover {
+  background: #176554;
+}

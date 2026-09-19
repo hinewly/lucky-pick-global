@@ -14,19 +14,47 @@
   const GAMES = {
     powerball: {
       name: 'Powerball',
+      flag: '🇺🇸',
+      region: 'US',
       mainRange: [1, 69],
       mainCount: 5,
       extraRange: [1, 26],
       extraCount: 1,
       extraName: 'Powerball',
+      extraPlural: 'Powerballs',
     },
     megamillions: {
       name: 'Mega Millions',
+      flag: '🇺🇸',
+      region: 'US',
       mainRange: [1, 70],
       mainCount: 5,
       extraRange: [1, 25],
       extraCount: 1,
       extraName: 'Mega Ball',
+      extraPlural: 'Mega Balls',
+    },
+    euromillions: {
+      name: 'EuroMillions',
+      flag: '🇪🇺',
+      region: 'EU',
+      mainRange: [1, 50],
+      mainCount: 5,
+      extraRange: [1, 12],
+      extraCount: 2,  // 2 lucky stars
+      extraName: 'Lucky Star',
+      extraPlural: 'Lucky Stars',
+    },
+    uklotto: {
+      name: 'UK Lotto',
+      flag: '🇬🇧',
+      region: 'UK',
+      mainRange: [1, 59],
+      mainCount: 6,
+      extraRange: [1, 59],
+      extraCount: 1,
+      extraName: 'Bonus Ball',
+      extraPlural: 'Bonus Balls',
     },
   };
 
@@ -539,6 +567,7 @@
       version: '1.0.0',
       games: Object.keys(GAMES),
       factorTypes: ['lucky', 'avoid', 'date', 'zodiac', 'dream', 'lifepath', 'lyrics'],
+      games: ['powerball', 'megamillions', 'euromillions', 'uklotto'],
       description: 'LuckyPick Global - Powerball & Mega Millions lucky number picker',
     },
   };
