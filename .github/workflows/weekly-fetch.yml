@@ -1,0 +1,74 @@
+name: Weekly lottery data fetch
+
+on:
+  # 每周一 9 AM 北京时间（UTC+8）= 周一 1 AM UTC
+  schedule:
+    - cron: '0 1 * * 1'
+  # 手动触发（用来测试或临时刷新）
+  workflow_dispatch:
+
+permissions:
+  contents: write # 推回 main 需要写权限
+
+concurrency:
+  group: weekly-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run fetcher
+        run: node src/fetch_global.mjs
+
+      - name: Check for data changes
+        id: check
+        run: |
+          if git diff --quiet -- public/data/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No new draws detected; skipping commit."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::New draws detected."
+            git diff --stat -- public/data/
+          fi
+
+      - name: Bump SW cache version
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          set -e
+          CURRENT=$(grep -oE "CACHE_VERSION = 'v[0-9]+'" public/service-worker.js | grep -oE 'v[0-9]+' | tr -d 'v')
+          NEW=$((CURRENT + 1))
+          echo "NEW_VERSION=v${NEW}" >> "$GITHUB_ENV"
+          echo "Bumping CACHE_VERSION v${CURRENT} → v${NEW}"
+          sed -i "s/CACHE_VERSION = 'v${CURRENT}'/CACHE_VERSION = 'v${NEW}'/" public/service-worker.js
+          sed -i "s/?v=${CURRENT}/?v=${NEW}/g" public/service-worker.js
+
+      - name: Commit and push
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config user.name "lucky-pick-bot"
+          git config user.email "[email protected]"
+          git add public/data/ public/service-worker.js
+          git commit -m "chore(weekly): fetch lottery data + bump SW → v${{ env.NEW_VERSION }}"
+          git push
+          echo "::notice::Pushed; deploy workflow will pick this up automatically."
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.check.outputs.changed }}" = "true" ]; then
+            echo "### ✅ Bumped to v${{ env.NEW_VERSION }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ℹ️ No change (data was already up to date)" >> "$GITHUB_STEP_SUMMARY"
+          fi

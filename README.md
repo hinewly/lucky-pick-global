@@ -74,12 +74,14 @@ Each set is generated independently. The algorithm does **not** improve winning 
 
 Each game ships with ~50 recent draws from [lotteryusa.com](https://www.lotteryusa.com/) (auto-fetched).
 
-To refresh the data:
+To refresh the data manually:
 
 ```bash
 node src/fetch_global.mjs
 # then bump CACHE_VERSION in public/service-worker.js and commit
 ```
+
+Or just trigger the **Weekly lottery data fetch** workflow from the Actions tab — it does all of the above (fetch → detect changes → bump SW → commit → push) automatically.
 
 Data files (`public/data/powerball.js`, `public/data/megamillions.js`) are in `[newest, ..., oldest]` order, with shape:
 
