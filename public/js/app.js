@@ -1100,6 +1100,21 @@
   function init() {
     loadData();
     loadState();
+    loadSaved();
+    loadSaveLimit();
+    loadGenLimit();
+    loadDevMode();
+    ensureDateRollover();
+    // URL shortcut check (#/super) → toggle dev mode
+    function applyShortcut() {
+      if (checkDevModeShortcut()) {
+        renderGenCounter();
+        try { toast(state.devMode ? '🛠 Dev Mode ON · unlimited generations & saves' : '🛠 Dev Mode OFF · limits back on'); } catch (e) {}
+      }
+    }
+    applyShortcut();
+    // Also handle hash changes while page is already loaded
+    window.addEventListener('hashchange', applyShortcut);
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const g = tab.dataset.game;
