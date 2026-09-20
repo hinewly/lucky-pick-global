@@ -684,6 +684,93 @@ header.hero h1 .refresh-app-btn:disabled {
   padding: 16px 20px;
 }
 
+/* ========== Install hero ========== */
+.install-hero {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-bottom: 20px;
+  padding: 4px 0 4px 0;
+}
+
+.install-hero-text {
+  flex: 1 1 50%;
+  min-width: 0;
+}
+
+.install-hero-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 0 8px;
+  line-height: 1.25;
+  letter-spacing: -0.3px;
+}
+
+.install-hero-sub {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.install-hero-cta {
+  display: inline-block;
+  background: var(--accent);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 100px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(217, 119, 87, 0.25);
+}
+
+.install-hero-cta:hover {
+  background: var(--accent-deep);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.35);
+}
+
+.install-hero-image {
+  flex: 0 0 45%;
+  max-width: 360px;
+}
+
+.install-hero-image svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.install-intro {
+  margin: 16px 0 16px;
+  color: var(--text-soft);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* Mobile: stack vertically */
+@media (max-width: 600px) {
+  .install-hero {
+    flex-direction: column-reverse;
+    gap: 16px;
+  }
+  .install-hero-text {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+  .install-hero-image {
+    flex: 0 0 auto;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+  .install-hero-title {
+    font-size: 20px;
+  }
+}
+
 /* Demo data 标记（橙色更显眼） */
 .recent-content .meta-note.demo-source {
   color: var(--accent-deep);
