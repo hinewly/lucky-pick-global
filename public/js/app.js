@@ -35,7 +35,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v29';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
+  const APP_VERSION = 'v30';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -1051,6 +1051,7 @@
     }
     row(state.game + ' data', hist.length + ' draws' + (hist.length ? ' ✓' : ' ✗'), hist.length ? 'ok' : 'bad');
     row('Current game', state.game);
+    row('App Version', APP_VERSION);
     row('Factors', state.factors.length);
     row('Last draw', last ? (last.date || '—') : 'none');
     row('Save key', state.saveKey);
