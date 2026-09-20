@@ -26,7 +26,7 @@
     <h1>
       <span class="logo">L</span>
       <span>LuckyPick</span>
-      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v38</span>
+      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v39</span>
       <button class="refresh-app-btn" id="refresh-app-btn" type="button"
               title="Refresh app · clears cache and reloads (use after data updates)">🔄</button>
     </h1>
@@ -131,6 +131,29 @@
           <dd>Type any lyric, sentence, or thought (max 256 characters). Generates a fresh set of numbers each Generate.</dd>
         </dl>
         <p class="muted small">💡 Tap Generate below to roll a new set. All your factors combine.</p>
+
+        <!-- ===== 设计思路（底部 callout） ===== -->
+        <div class="factor-design-note">
+            <h4 class="factor-design-title">💡 Why these 7 factors?</h4>
+
+            <p class="factor-design-lead">The 6 + 1 design — and how to use them.</p>
+
+            <dl class="factor-design-list">
+              <dt><b>6 input factors</b></dt>
+              <dd>Lucky #, Avoid #, Birthday, Zodiac, Dream, Life Path — each one is a clear number or pick you control.</dd>
+
+              <dt><b>1 free-text factor</b></dt>
+              <dd>Lyric / Phrase — type anything (a lyric, a thought, a sentence). It gets hashed into a fresh number set on every Generate.</dd>
+
+              <dt><b>Use 0, 1, some, or all</b></dt>
+              <dd>Want pure random? Skip everything. Want maximum personal touch? Add as many as you like. There's no required minimum.</dd>
+
+              <dt><b>Saved locally, always private</b></dt>
+              <dd>Everything you add is stored in your browser's localStorage on this device only. No signup, no server, no tracking. Close the tab — your factors are still here next time.</dd>
+            </dl>
+
+            <p class="factor-design-foot muted">Pick what feels yours. The randomness fills the rest.</p>
+          </div>
       </div>
     </details>
   </section>

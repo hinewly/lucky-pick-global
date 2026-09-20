@@ -1519,6 +1519,71 @@ header.hero h1 .refresh-app-btn:disabled {
   line-height: 1.5;
 }
 
+/* ===== 设计思路 callout（在 factor-help 卡底部） ===== */
+.factor-design-note {
+  margin-top: 18px;
+  padding: 14px 16px;
+  background: var(--accent-soft);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.factor-design-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-deep);
+}
+
+.factor-design-lead {
+  margin: 0 0 12px;
+  font-size: 12px;
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+.factor-design-list {
+  margin: 0 0 12px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+}
+
+.factor-design-list dt {
+  font-weight: 600;
+  color: var(--accent-deep);
+  white-space: nowrap;
+}
+
+.factor-design-list dd {
+  margin: 0;
+  color: var(--text);
+}
+
+.factor-design-foot {
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(217, 119, 87, 0.3);
+  font-size: 12px;
+  font-style: italic;
+}
+
+@media (max-width: 480px) {
+  .factor-design-list {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .factor-design-list dt {
+    margin-top: 6px;
+  }
+  .factor-design-list dt:first-child {
+    margin-top: 0;
+  }
+}
+
 /* ========== Generate Counter ========== */
 .gen-counter {
   font-size: 14px;
