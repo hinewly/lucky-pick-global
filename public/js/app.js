@@ -35,6 +35,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
+  const APP_VERSION = 'v27';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -1178,6 +1179,9 @@
     updateDebug();
     renderSavedNumbers();
     renderGenCounter();
+    // 版本号徽章：从 APP_VERSION 同步到 header
+    const verEl = document.getElementById('app-version');
+    if (verEl) verEl.textContent = APP_VERSION;
 
     // Refresh data 按钮
     const refreshBtn = document.getElementById('refresh-data-btn');
