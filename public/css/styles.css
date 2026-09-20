@@ -684,6 +684,15 @@ header.hero h1 .refresh-app-btn:disabled {
   padding: 16px 20px;
 }
 
+/* Demo data 标记（橙色更显眼） */
+.recent-content .meta-note.demo-source {
+  color: var(--accent-deep);
+  background: var(--accent-soft);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+}
+
 /* ========== 使用指引 / PWA 卡片 ========== */
 .guide-card, .pwa-card {
   padding: 0;

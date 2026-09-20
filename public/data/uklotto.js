@@ -10,3 +10,4 @@ window.UKLOTTO = [
   { "date": "2026-08-20", "main": [11, 18, 27, 35, 46, 59], "extra": [22] },
   { "date": "2026-08-16", "main": [3, 10, 17, 26, 39, 50], "extra": [44] }
 ];
+window.UKLOTTO_SOURCE = 'seed';

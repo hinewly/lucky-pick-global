@@ -100,24 +100,115 @@ function parseUsStyle(html, cfg) {
 }
 
 function parseEuroMillions(html) {
-  // EuroMillions: 5 main balls + 2 lucky stars (gold colored)
-  // 站点结构: li.c-ball.c-ball--result, .c-ball.c-ball--lucky-star
-  // 站点结构会变，下面只是占位，需要根据真实页面调整
+  // EuroMillions: 5 main balls (1-50) + 2 lucky stars (1-12)
+  // 站点: euro-millions.com/en/results/history
+  // 保守写法：尝试多种常见 HTML 结构，找不到就返回 []
   const draws = [];
-  // 尝试常见模式
-  const cardPattern = /<article[^>]*class="[^"]*result[^"]*"[^>]*>([\s\S]*?)<\/article>/g;
-  // ... 占位实现，数据从另一条路径补
-  // 实际可靠来源：lotterysoup.com / lotteryextreme.com
-  // 这里只兜底，直接返回 seed data
+  const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+                   jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+
+  // 1. 找每个 draw 块（多种常见结构都试）
+  const cardRe = /<(?:article|li|div)\s+[^>]*class="[^"]*(?:result|draw|ball-row)[^"]*"[^>]*>([\s\S]*?)<\/(?:article|li|div)>/gi;
+  const cards = [...html.matchAll(cardRe)];
+  if (cards.length === 0) return draws;
+
+  for (const card of cards) {
+    const chunk = card[1];
+
+    // 2. 找日期（"18 Sep 2026" 或 "Sep 18, 2026"）
+    const dateMatch = chunk.match(/\b(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\b/) ||
+                      chunk.match(/\b([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})\b/);
+    if (!dateMatch) continue;
+    let day, mon, yr;
+    if (dateMatch[1] && /\d/.test(dateMatch[1])) {
+      day = +dateMatch[1]; mon = MONTHS[dateMatch[2].toLowerCase()]; yr = +dateMatch[3];
+    } else {
+      day = +dateMatch[2]; mon = MONTHS[dateMatch[1].toLowerCase()]; yr = +dateMatch[3];
+    }
+    if (!mon || !day || !yr) continue;
+    const dateStr = `${yr}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+    // 3. 找所有数字 1-50（main 球范围）
+    const allNums = [...chunk.matchAll(/>\s*(\d{1,2})\s*</g)]
+      .map(x => parseInt(x[1], 10))
+      .filter(n => n >= 1 && n <= 50);
+    if (allNums.length < 7) continue;
+
+    // 4. 去重，按出现顺序；前 5 unique 是 main，剩 1-12 的是 stars
+    const seen = new Set();
+    const ordered = [];
+    for (const n of allNums) {
+      if (!seen.has(n)) { seen.add(n); ordered.push(n); }
+      if (ordered.length >= 7) break;
+    }
+    if (ordered.length < 7) continue;
+
+    const main = ordered.slice(0, 5);
+    const stars = ordered.slice(5, 7).filter(n => n <= 12);
+    if (stars.length !== 2) continue;
+
+    draws.push({
+      date: dateStr,
+      main: main.sort((a, b) => a - b),
+      extra: stars.sort((a, b) => a - b),
+    });
+    if (draws.length >= 50) break;
+  }
   return draws;
 }
 
 function parseUkLotto(html) {
-  // UK Lotto: 6 main balls + 1 bonus ball
-  // 国家彩票网站有强反爬，普通 fetch 难以解析
-  // 推荐来源: lotteryextreme.com / lotterysoup.com
+  // UK Lotto: 6 main balls (1-59) + 1 bonus ball
+  // 站点: national-lottery.co.uk/lotto/results (有反爬，可能拿不到 HTML)
+  // 保守写法：尝试常见 HTML 结构
   const draws = [];
-  // 占位
+  const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6,
+                   jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+
+  // 找每个 draw 块
+  const cardRe = /<(?:article|li|div)\s+[^>]*class="[^"]*(?:result|draw|lotto-row|ball-row)[^"]*"[^>]*>([\s\S]*?)<\/(?:article|li|div)>/gi;
+  const cards = [...html.matchAll(cardRe)];
+  if (cards.length === 0) return draws;
+
+  for (const card of cards) {
+    const chunk = card[1];
+
+    // 找日期
+    const dateMatch = chunk.match(/\b(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})\b/) ||
+                      chunk.match(/\b([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})\b/);
+    if (!dateMatch) continue;
+    let day, mon, yr;
+    if (dateMatch[1] && /\d/.test(dateMatch[1])) {
+      day = +dateMatch[1]; mon = MONTHS[dateMatch[2].toLowerCase()]; yr = +dateMatch[3];
+    } else {
+      day = +dateMatch[2]; mon = MONTHS[dateMatch[1].toLowerCase()]; yr = +dateMatch[3];
+    }
+    if (!mon || !day || !yr) continue;
+    const dateStr = `${yr}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+    // 找数字 1-59
+    const allNums = [...chunk.matchAll(/>\s*(\d{1,2})\s*</g)]
+      .map(x => parseInt(x[1], 10))
+      .filter(n => n >= 1 && n <= 59);
+    if (allNums.length < 7) continue;
+
+    // 去重；UK Lotto 是 6 main + 1 bonus（bonus 也可能不在 main 里）
+    // 简化：前 6 unique 算 main，第 7 个算 bonus
+    const seen = new Set();
+    const ordered = [];
+    for (const n of allNums) {
+      if (!seen.has(n)) { seen.add(n); ordered.push(n); }
+      if (ordered.length >= 7) break;
+    }
+    if (ordered.length < 7) continue;
+
+    draws.push({
+      date: dateStr,
+      main: ordered.slice(0, 6).sort((a, b) => a - b),
+      extra: [ordered[6]],
+    });
+    if (draws.length >= 50) break;
+  }
   return draws;
 }
 
@@ -141,7 +232,7 @@ function formatDate(s) {
 // ============================================================
 // 写入数据文件
 // ============================================================
-function writeDataFile(game, draws) {
+function writeDataFile(game, draws, source = 'live') {
   const cfg = GAMES[game];
   const filename = path.join(__dirname, '..', 'public', 'data',
     game === 'powerball' ? 'powerball.js' :
@@ -149,10 +240,14 @@ function writeDataFile(game, draws) {
     game === 'euromillions' ? 'euromillions.js' :
     'uklotto.js'
   );
-  const content = `window.${cfg.varName} = ${JSON.stringify(draws, null, 2)};\n`;
+  const content = `window.${cfg.varName} = ${JSON.stringify(draws, null, 2)};\n` +
+    `window.${cfg.varName}_SOURCE = '${source}';\n`;
   fs.writeFileSync(filename, content, 'utf8');
-  console.log(`  → Wrote ${draws.length} draws to ${filename}`);
+  console.log(`  → Wrote ${draws.length} draws to ${filename} (source: ${source})`);
 }
+
+// 至少需要这么多条数据才算成功，否则保留 seed（防止 parser bug 把数据清空）
+const MIN_DRAWS = 5;
 
 // ============================================================
 // 主流程
@@ -170,10 +265,14 @@ async function main() {
       const html = await res.text();
       const draws = cfg.parse(html, cfg);
       if (draws.length === 0) {
-        console.log(`  (no new draws parsed; keeping existing seed data)`);
+        console.log(`  (no draws parsed; keeping existing seed data)`);
         continue;
       }
-      writeDataFile(game, draws);
+      if (draws.length < MIN_DRAWS) {
+        console.log(`  (only ${draws.length} draws parsed, need >= ${MIN_DRAYS}; keeping seed)`);
+        continue;
+      }
+      writeDataFile(game, draws, 'live');
       ok++;
     } catch (err) {
       console.error(`  ${cfg.name} fetch failed:`, err.message);
@@ -181,7 +280,7 @@ async function main() {
     }
   }
 
-  console.log(`\n=== Done (${ok}/${Object.keys(GAMES).length} games updated) ===`);
+  console.log(`\n=== Done (${ok}/${Object.keys(GAMES).length} games updated to live data) ===`);
   if (ok > 0) {
     console.log('\n下一步: bump SW version in public/service-worker.js');
     console.log('然后 commit + push (auto-deploys to GitHub Pages)');

@@ -32,10 +32,11 @@
     savedKey: 'luckyPick.saved.v1',
     saveLimitKey: 'luckyPick.savelimit.v1',
     genLimitKey: 'luckyPick.genlimit.v1',
+    dataSource: { powerball: 'live', megamillions: 'live', euromillions: 'seed', uklotto: 'seed' },
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v34';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
+  const APP_VERSION = 'v35';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -51,15 +52,19 @@
   function loadData() {
     if (global.POWERBALL && Array.isArray(global.POWERBALL)) {
       state.history.powerball = normalize(global.POWERBALL);
+      state.dataSource.powerball = global.POWERBALL_SOURCE || 'live';
     }
     if (global.MEGAMILLIONS && Array.isArray(global.MEGAMILLIONS)) {
       state.history.megamillions = normalize(global.MEGAMILLIONS);
+      state.dataSource.megamillions = global.MEGAMILLIONS_SOURCE || 'live';
     }
     if (global.EUROMILLIONS && Array.isArray(global.EUROMILLIONS)) {
       state.history.euromillions = normalize(global.EUROMILLIONS);
+      state.dataSource.euromillions = global.EUROMILLIONS_SOURCE || 'seed';
     }
     if (global.UKLOTTO && Array.isArray(global.UKLOTTO)) {
       state.history.uklotto = normalize(global.UKLOTTO);
+      state.dataSource.uklotto = global.UKLOTTO_SOURCE || 'seed';
     }
   }
 
@@ -873,7 +878,12 @@
     });
     container.appendChild(list);
 
-    const meta = el('div', { class: 'meta-note muted', text: 'Showing latest ' + recent.length + ' draws · Source: official lottery websites' });
+    const source = state.dataSource[game] || 'seed';
+    const sourceText = source === 'live'
+      ? 'Source: official lottery websites'
+      : 'Source: demo data (waiting for live fetcher to connect)';
+    const meta = el('div', { class: 'meta-note muted' + (source === 'seed' ? ' demo-source' : ''),
+      text: 'Showing latest ' + recent.length + ' draws · ' + sourceText });
     container.appendChild(meta);
   }
 

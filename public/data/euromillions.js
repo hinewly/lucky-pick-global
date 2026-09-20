@@ -10,3 +10,4 @@ window.EUROMILLIONS = [
   { "date": "2026-08-22", "main": [12, 22, 32, 40, 50], "extra": [2, 9] },
   { "date": "2026-08-19", "main": [1, 15, 24, 34, 42], "extra": [4, 8] }
 ];
+window.EUROMILLIONS_SOURCE = 'seed';
