@@ -161,6 +161,12 @@ header.hero h1 .refresh-app-btn:disabled {
   border-radius: var(--radius);
 }
 
+/* Tabs inside Recent Draws card: tighter spacing */
+.recent-content .tabs {
+  margin-bottom: 14px;
+  margin-top: 0;
+}
+
 .tab {
   flex: 1;
   padding: 10px 14px;

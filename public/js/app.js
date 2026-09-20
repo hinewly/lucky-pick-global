@@ -35,7 +35,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v32';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
+  const APP_VERSION = 'v33';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -847,6 +847,7 @@
   }
 
   function renderRecent() {
+    updateRecentTitle();
     const container = $('freq');
     if (!container) return;
     container.innerHTML = '';
@@ -1076,6 +1077,14 @@
     } else {
       el.textContent = 'No data';
     }
+  }
+
+  // Recent Draws 标题同步当前游戏名
+  function updateRecentTitle() {
+    const titleEl = document.getElementById('recent-title');
+    if (!titleEl) return;
+    const game = Engine.GAMES[state.game];
+    if (game) titleEl.textContent = game.name + ' Recent Draws';
   }
 
   async function refreshData() {
