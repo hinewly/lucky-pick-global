@@ -382,7 +382,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'luckypick-' + set.gameName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + '.png';
+        a.download = 'luckypick-' + sets[0].gameName.toLowerCase().replace(/\s+/g, '-') + '-' + Date.now() + '.png';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -682,7 +682,7 @@
     if (!set) return;
     const status = saveLimitStatus();
     if (!status.canSave) {
-      showUpgradeModal('You\'ve used all ' + FREE_DAILY_LIMIT + ' free saves today.\n\nUpgrade to Pro for unlimited saves and history across all your devices.\n\n(Coming to App Store soon — leave your email for early access?)');
+      showUpgradeModal('You\'ve used all ' + FREE_SAVE_LIMIT + ' free saves today.\n\nUpgrade to Pro for unlimited saves and history across all your devices.\n\n(Coming to App Store soon — leave your email for early access?)');
       return;
     }
     const id = 'sv_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -755,7 +755,7 @@
         counterEl.innerHTML = '💎 <b>Pro</b> · Unlimited saves';
         counterEl.className = 'save-counter pro';
       } else {
-        counterEl.innerHTML = '💎 <b>' + status.remaining + ' / ' + FREE_DAILY_LIMIT + '</b> free saves today';
+        counterEl.innerHTML = '💎 <b>' + status.remaining + ' / ' + FREE_SAVE_LIMIT + '</b> free saves today';
         counterEl.className = 'save-counter' + (status.remaining === 0 ? ' exhausted' : '');
       }
     }
@@ -886,7 +886,7 @@
     let body = '';
     if (type === 'lucky' || type === 'avoid') {
       // 极简：只放输入框，详细说明在底下的 help details
-      body = '<input type="text" id="modal-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="Any digits, up to 9" autocomplete="off" />';
+      body = '<input type="text" id="modal-input" inputmode="numeric" pattern="[0-9\\s,;]*" maxlength="80" placeholder="e.g. 7 or 7 14 23" autocomplete="off" />';
     } else if (type === 'date') {
       body = `<label>Date</label>
               <input type="date" id="modal-input" value="${new Date().toISOString().slice(0,10)}" />`;
@@ -923,12 +923,17 @@
           const min = cfg ? cfg.mainRange[0] : 1;
           const result = parseLuckyInput(val, min, max);
           if (result.error) return alert(result.error);
-          const n = result.value;
+          const nums = result.values;
           const typeName = type === 'lucky' ? 'lucky numbers' : 'avoid numbers';
-          if (state.factors.some(f => f.type === type && f.data && f.data.includes(n))) {
-            return alert('You already added #' + n + ' to ' + typeName);
+          // 检查是否跟已有的 factor 冲突
+          const existing = state.factors
+            .filter(f => f.type === type && Array.isArray(f.data))
+            .flatMap(f => f.data);
+          const conflicts = nums.filter(n => existing.includes(n));
+          if (conflicts.length) {
+            return alert('You already added #' + conflicts.join(', #') + ' to ' + typeName);
           }
-          factor = type === 'lucky' ? Engine.makeLucky([n]) : Engine.makeAvoid([n]);
+          factor = type === 'lucky' ? Engine.makeLucky(nums) : Engine.makeAvoid(nums);
           // 算法细节不告诉用户（黑盒）
         }
         else if (type === 'date') factor = Engine.makeDate(val);
@@ -964,30 +969,40 @@
   function parseNums(s) {
     return s.split(/[\s,,，]+/).map(x => Number(x.trim())).filter(n => Number.isFinite(n));
   }
-  // 数字根算法：把数字串收成 [min, max] 之间的数
-  // 输入限制：只允许数字，最多 9 位
-  // 例: 7 → 7, 78 → 15 (7+8), 12345 → 15, 999999999 → 63, 9999999999 → 9 (超过 9 位会被拒)
+  // 多数字解析：按空格/逗号/分号分隔成多个部分，每部分走数字根算法收成 [min, max] 之间的数
+  // 输入限制：每部分只允许数字，最多 9 位
+  // 例: 7 → [7], 78 → [15] (7+8), 12345 → [15], "7 14 23" → [7,14,23], "7,14,7" → [7,14] (自动去重)
   function parseLuckyInput(s, min, max) {
     min = (min == null) ? 1 : min;
     max = (max == null) ? 69 : max;
-    // 只留数字（防用户粘贴时带空格等）
-    const digits = String(s).replace(/\D/g, '');
-    if (!digits) return { error: 'Type some digits (e.g. 7 or 12345)' };
-    if (digits.length > 9) return { error: 'Maximum 9 digits allowed (you entered ' + digits.length + ')' };
-    let n = parseInt(digits, 10);
-    if (!Number.isFinite(n)) return { error: 'Invalid number' };
-    if (n >= min && n <= max) return { value: n, original: digits, transformed: false };
-    // 数字根
-    let sum = 0;
-    for (const ch of digits) sum += parseInt(ch, 10);
-    while (sum > max) {
-      let s2 = 0;
-      for (const ch of String(sum)) s2 += parseInt(ch, 10);
-      if (s2 === sum) break;
-      sum = s2;
+    // 按空格/逗号/分号分隔
+    const parts = String(s).split(/[\s,;]+/).filter(Boolean);
+    if (!parts.length) return { error: 'Type some digits (e.g. 7 or 7 14 23)' };
+    const values = [];
+    for (const part of parts) {
+      const digits = part.replace(/\D/g, '');
+      if (!digits) return { error: 'Invalid input: "' + part + '"' };
+      if (digits.length > 9) return { error: 'Maximum 9 digits per number (got ' + digits.length + ' in "' + part + '")' };
+      let n = parseInt(digits, 10);
+      if (!Number.isFinite(n)) return { error: 'Invalid number: "' + part + '"' };
+      if (n < min || n > max) {
+        // 数字根
+        let sum = 0;
+        for (const ch of digits) sum += parseInt(ch, 10);
+        while (sum > max) {
+          let s2 = 0;
+          for (const ch of String(sum)) s2 += parseInt(ch, 10);
+          if (s2 === sum) break;
+          sum = s2;
+        }
+        if (sum < min) sum = min;
+        n = sum;
+      }
+      values.push(n);
     }
-    if (sum < min) sum = min;
-    return { value: sum, original: digits, transformed: true };
+    // 去重
+    const unique = Array.from(new Set(values));
+    return { values: unique, original: s };
   }
   function closeModal() { $('modal-mask').classList.remove('show'); }
 
