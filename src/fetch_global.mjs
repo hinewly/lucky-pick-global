@@ -86,7 +86,7 @@ function parseUsStyle(html, cfg) {
     while ((m = whitePattern.exec(chunk)) !== null && white.length < 5) {
       white.push(Number(m[1]));
     }
-    const extraPattern = new RegExp(`c-ball ${cfg.extraClass} c-ball--sm">(\\\\d+)`, 'g');
+    const extraPattern = new RegExp(`c-ball ${cfg.extraClass} c-ball--sm">(\\d+)`, 'g');
     const extraMatch = extraPattern.exec(chunk);
     if (white.length === 5 && extraMatch) {
       draws.push({
