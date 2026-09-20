@@ -36,7 +36,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v40';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
+  const APP_VERSION = 'v41';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -1098,21 +1098,30 @@
   }
 
   async function refreshData() {
-    const btn = document.getElementById('refresh-data-btn');
+    const btn = document.getElementById('refresh-app-btn');
     if (!btn) return;
     const original = btn.textContent;
     btn.textContent = '⏳ Refreshing...';
     btn.disabled = true;
     try {
-      // 清掉 SW 缓存
+      // 1. 清掉所有 SW 缓存
       if ('caches' in window) {
         const keys = await caches.keys();
-        for (const k of keys) {
-          if (k.startsWith('lucky-pick-global-')) await caches.delete(k);
-        }
+        await Promise.all(
+          keys.filter(k => k.startsWith('lucky-pick-global-'))
+              .map(k => caches.delete(k))
+        );
       }
-      // 强制 reload（带 cache-bust）
-      location.reload(true);
+      // 2. Unregister 当前 SW（让下次访问重新注册最新版本）
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      // 3. 用 cache-busting query string 强制重新加载
+      //    (location.reload(true) 在现代浏览器里被忽略 = NO-OP)
+      const url = new URL(location.href);
+      url.searchParams.set('_t', String(Date.now()));
+      location.replace(url);
     } catch (e) {
       alert('Refresh failed: ' + e.message);
       btn.textContent = original;
