@@ -192,6 +192,38 @@ header.hero h1 .refresh-app-btn:disabled {
   color: var(--text);
 }
 
+/* Disabled / "coming soon" tab (EU + UK while fetcher unavailable) */
+.tab.tab-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: transparent;
+  box-shadow: none;
+}
+.tab.tab-disabled:hover {
+  color: var(--text-soft);
+  background: transparent;
+  box-shadow: none;
+}
+.tab.tab-disabled.active {
+  /* shouldn't happen, but just in case */
+  background: var(--bg-deep);
+  color: var(--text-soft);
+  font-weight: 500;
+}
+.tab .soon-pill {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  padding: 2px 6px;
+  border-radius: 100px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
 /* ========== 卡片 ========== */
 .card {
   background: var(--card);

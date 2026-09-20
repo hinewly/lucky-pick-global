@@ -26,7 +26,7 @@
     <h1>
       <span class="logo">L</span>
       <span>LuckyPick</span>
-      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v37</span>
+      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v38</span>
       <button class="refresh-app-btn" id="refresh-app-btn" type="button"
               title="Refresh app · clears cache and reloads (use after data updates)">🔄</button>
     </h1>
@@ -75,19 +75,19 @@
   </details>
 
   <!-- ========== Recent Draws (上移到顶部，可折叠，Tabs 嵌在顶部) ========== -->
-  <details class="card recent-card" open>
+  <details class="card recent-card">
     <summary>
       <span class="num">1</span>
       <span><b id="recent-title">Recent Draws</b></span>
-      <span class="hint">📅 <span id="last-update">Loading…</span> · click to collapse</span>
+      <span class="hint">📅 <span id="last-update">Loading…</span> · click to view</span>
     </summary>
     <div class="recent-content">
       <!-- 4 个彩票切换 tab（嵌在 Recent Draws 框内顶部） -->
       <div class="tabs recent-tabs">
         <button class="tab active" data-game="powerball"><span class="flag">🇺🇸</span> Powerball</button>
         <button class="tab" data-game="megamillions"><span class="flag">🇺🇸</span> Mega Millions</button>
-        <button class="tab" data-game="euromillions"><span class="flag">🇪🇺</span> EuroMillions</button>
-        <button class="tab" data-game="uklotto"><span class="flag">🇬🇧</span> UK Lotto</button>
+        <button class="tab tab-disabled" data-game="euromillions" aria-disabled="true"><span class="flag">🇪🇺</span> EuroMillions <span class="soon-pill">soon</span></button>
+        <button class="tab tab-disabled" data-game="uklotto" aria-disabled="true"><span class="flag">🇬🇧</span> UK Lotto <span class="soon-pill">soon</span></button>
       </div>
       <div id="freq"></div>
     </div>

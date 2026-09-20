@@ -36,7 +36,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v37';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
+  const APP_VERSION = 'v38';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -1176,7 +1176,14 @@
     document.querySelectorAll('.tab').forEach(tab => {
       tab.addEventListener('click', () => {
         const g = tab.dataset.game;
-        if (g && Engine.GAMES[g]) {
+        if (!g) return;
+        // Disabled ("coming soon") tabs: show toast, don't switch
+        if (tab.classList.contains('tab-disabled')) {
+          const label = tab.textContent.replace(/\s+/g, ' ').trim();
+          toast('🚧 ' + label.split(' soon')[0] + ' — coming soon, fetcher in development');
+          return;
+        }
+        if (Engine.GAMES[g]) {
           state.game = g;
           document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === g));
           renderFactors(); renderResults(); renderRecent(); renderSavedNumbers(); saveState(); updateDebug();
