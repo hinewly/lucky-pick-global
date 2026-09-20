@@ -26,7 +26,7 @@
     <h1>
       <span class="logo">L</span>
       <span>LuckyPick</span>
-      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v30</span>
+      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v31</span>
       <button class="refresh-app-btn" id="refresh-app-btn" type="button"
               title="Refresh app · clears cache and reloads (use after data updates)">🔄</button>
     </h1>
@@ -74,26 +74,26 @@
     </div>
   </details>
 
-  <!-- ========== Tabs ========== -->
+  <!-- ========== Recent Draws (上移到顶部，可折叠) ========== -->
+  <details class="card recent-card" open>
+    <summary>
+      <span class="num">1</span>
+      <span><b>Recent Draws</b></span>
+      <span class="hint">📅 <span id="last-update">Loading…</span> · click to collapse</span>
+    </summary>
+    <div class="recent-content">
+      <div id="freq"></div>
+      <div class="meta-note muted">Showing latest 5 draws · Source: official lottery websites</div>
+    </div>
+  </details>
+
+  <!-- ========== Tabs (下移到 Recent Draws 之后) ========== -->
   <div class="tabs">
     <button class="tab active" data-game="powerball"><span class="flag">🇺🇸</span> Powerball</button>
     <button class="tab" data-game="megamillions"><span class="flag">🇺🇸</span> Mega Millions</button>
     <button class="tab" data-game="euromillions"><span class="flag">🇪🇺</span> EuroMillions</button>
     <button class="tab" data-game="uklotto"><span class="flag">🇬🇧</span> UK Lotto</button>
   </div>
-
-  <!-- ========== Recent Draws (移到顶部，更显眼) ========== -->
-  <section class="card">
-    <h2>
-      <span class="num">1</span>
-      <span>Recent Draws</span>
-      <span class="hint">Latest real results</span>
-    </h2>
-    <div class="update-bar">
-      <span class="update-info" id="last-update">Loading…</span>
-    </div>
-    <div id="freq"></div>
-  </section>
 
   <section class="card">
     <h2>

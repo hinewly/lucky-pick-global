@@ -626,6 +626,58 @@ header.hero h1 .refresh-app-btn:disabled {
 }
 
 
+/* ========== Recent Draws 可折叠卡片 ========== */
+.recent-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.recent-card summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  user-select: none;
+}
+
+.recent-card summary::-webkit-details-marker {
+  display: none;
+}
+
+.recent-card[open] summary {
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-deep);
+}
+
+.recent-card summary .num {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recent-card summary .hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+  margin-left: auto;
+}
+
+.recent-content {
+  padding: 16px 20px;
+}
+
 /* ========== 使用指引 / PWA 卡片 ========== */
 .guide-card, .pwa-card {
   padding: 0;
