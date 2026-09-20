@@ -26,7 +26,9 @@
     <h1>
       <span class="logo">L</span>
       <span>LuckyPick</span>
-      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v27</span>
+      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v28</span>
+      <button class="refresh-app-btn" id="refresh-app-btn" type="button"
+              title="Refresh app · clears cache and reloads (use after data updates)">🔄</button>
     </h1>
     <p class="tagline">Tap <b>Generate</b> for instant random numbers · Or add factors for a more personal pick · For entertainment only</p>
   </header>
@@ -80,39 +82,22 @@
     <button class="tab" data-game="uklotto"><span class="flag">🇬🇧</span> UK Lotto</button>
   </div>
 
-  <!-- ========== Saved Library (新) ========== -->
-  <section class="card">
-    <h2>
-      <span class="num">📚</span>
-      <span>My Saved Numbers</span>
-      <span class="hint">Keep picks you actually want to use</span>
-    </h2>
-    <div class="save-toolbar">
-      <span class="save-counter" id="save-counter">💎 3 / 3 free saves today</span>
-      <button class="upgrade-btn" id="upgrade-btn" type="button">⭐ Upgrade to Pro</button>
-    </div>
-    <div id="saved-list"></div>
-  </section>
-
   <!-- ========== Recent Draws (移到顶部，更显眼) ========== -->
   <section class="card">
     <h2>
-      <span class="num">2</span>
+      <span class="num">1</span>
       <span>Recent Draws</span>
       <span class="hint">Latest real results</span>
     </h2>
     <div class="update-bar">
       <span class="update-info" id="last-update">Loading…</span>
-      <button class="refresh-btn" id="refresh-data-btn" type="button">
-        🔄 Refresh data
-      </button>
     </div>
     <div id="freq"></div>
   </section>
 
   <section class="card">
     <h2>
-      <span class="num">3</span>
+      <span class="num">2</span>
       <span>Add Personal Factors (optional)</span>
       <span class="hint">Optional · skip if you want pure random</span>
     </h2>
@@ -155,7 +140,7 @@
   <!-- ========== Generate ========== -->
   <section class="card">
     <h2>
-      <span class="num">4</span>
+      <span class="num">3</span>
       <span>Generate</span>
     </h2>
     <div class="gen-counter" id="gen-counter">🎯 5 / 5 free Generations today</div>
@@ -170,11 +155,25 @@
   <!-- ========== Results ========== -->
   <section class="card" id="results-card">
     <h2>
-      <span class="num">5</span>
+      <span class="num">4</span>
       <span>Your Numbers</span>
       <span class="hint">Based on your factors (or random if none)</span>
     </h2>
     <div id="results"></div>
+  </section>
+
+  <!-- ========== Saved Library (移到下面，编号 5) ========== -->
+  <section class="card">
+    <h2>
+      <span class="num">5</span>
+      <span>My Saved Numbers</span>
+      <span class="hint">Keep picks you actually want to use</span>
+    </h2>
+    <div class="save-toolbar">
+      <span class="save-counter" id="save-counter">💎 3 / 3 free saves today</span>
+      <button class="upgrade-btn" id="upgrade-btn" type="button">⭐ Upgrade to Pro</button>
+    </div>
+    <div id="saved-list"></div>
   </section>
 
   <!-- ========== Tip / Support ========== -->
