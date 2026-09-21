@@ -1,5 +1,18 @@
 window.POWERBALL = [
   {
+    "date": "2026-09-19",
+    "main": [
+      18,
+      30,
+      41,
+      45,
+      68
+    ],
+    "extra": [
+      10
+    ]
+  },
+  {
     "date": "2026-09-16",
     "main": [
       2,
@@ -635,18 +648,6 @@ window.POWERBALL = [
     "extra": [
       13
     ]
-  },
-  {
-    "date": "2026-05-25",
-    "main": [
-      17,
-      32,
-      48,
-      60,
-      64
-    ],
-    "extra": [
-      10
-    ]
   }
 ];
+window.POWERBALL_SOURCE = 'live';

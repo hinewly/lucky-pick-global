@@ -650,3 +650,4 @@ window.MEGAMILLIONS = [
     ]
   }
 ];
+window.MEGAMILLIONS_SOURCE = 'live';
