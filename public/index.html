@@ -26,7 +26,7 @@
     <h1>
       <span class="logo">L</span>
       <span>LuckyPick</span>
-      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v44</span>
+      <span class="version-badge" id="app-version" title="Build version · keep in sync with service-worker.js CACHE_VERSION">v45</span>
       <button class="refresh-app-btn" id="refresh-app-btn" type="button"
               title="Refresh app · clears cache and reloads (use after data updates)">🔄</button>
     </h1>
@@ -91,6 +91,23 @@
         <button class="tab tab-disabled" data-game="uklotto" aria-disabled="true"><span class="flag">🇬🇧</span> UK Lotto <span class="soon-pill">soon</span></button>
       </div>
       <div id="freq"></div>
+
+      <!-- Frequency Stats -->
+      <div class="freq-stats" id="freq-stats">
+        <div class="freq-head">
+          <b>📊 Frequency Stats</b>
+          <div class="seg" id="freq-lookback">
+            <button data-lb="20">20 draws</button>
+            <button data-lb="50" class="active">50 draws</button>
+          </div>
+        </div>
+        <div id="freq-grid"></div>
+        <p class="muted small" style="margin-top:8px;">
+          <span class="hot">hot</span> = appears way more than average ·
+          <span class="cold">cold</span> = way less · last <b id="freq-lb">50</b> draws.
+          <b>Intentional picks, not blind luck.</b>
+        </p>
+      </div>
     </div>
   </details>
 
@@ -157,6 +174,28 @@
           </div>
       </div>
     </details>
+  </section>
+
+  <!-- ========== Manual Pick ========== -->
+  <section class="card" id="manual-card">
+    <h2>
+      <span class="num">✍️</span>
+      <span>Or Enter Your Own</span>
+      <span class="hint">Saw hot/cold numbers you like? Type them in</span>
+    </h2>
+    <div class="manual-count-row">
+      <span class="muted small">Sets:</span>
+      <div class="seg" id="manual-count">
+        <button data-n="1">1</button>
+        <button data-n="2" class="active">2</button>
+        <button data-n="3">3</button>
+      </div>
+    </div>
+    <div id="manual-inputs"></div>
+    <div class="manual-actions">
+      <button class="btn-primary" id="btn-use-manual">✅ Use These Numbers</button>
+      <span class="muted small" id="manual-msg"></span>
+    </div>
   </section>
 
   <!-- ========== Generate ========== -->

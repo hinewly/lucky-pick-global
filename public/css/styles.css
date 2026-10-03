@@ -1693,3 +1693,124 @@ header.hero h1 .refresh-app-btn:disabled {
   background: #fff;
   padding: 6px;
 }
+
+/* ============================================================
+   Frequency Stats（频率统计：热/温/冷）
+   ============================================================ */
+.freq-stats {
+  margin-top: 14px;
+  border-top: 1px dashed var(--line);
+  padding-top: 12px;
+}
+.freq-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--bg-deep);
+}
+.seg button {
+  border: none;
+  background: transparent;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.seg button.active {
+  background: var(--accent);
+  color: #fff;
+}
+.freq-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-soft);
+  margin: 12px 0 6px;
+}
+.freq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+  gap: 4px;
+}
+.freq-cell {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 4px 4px 5px;
+}
+.freq-cell .top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  line-height: 1.4;
+}
+.freq-cell .cnt { opacity: .7; font-weight: 500; }
+.hot  { color: var(--accent-deep); font-weight: 700; }
+.cold { color: var(--success); font-weight: 700; }
+.warm { color: var(--text); font-weight: 600; }
+.barbg {
+  height: 4px;
+  background: var(--bg-deep);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.barfill { height: 100%; border-radius: 2px; }
+.barfill.hot  { background: var(--accent-deep); }
+.barfill.warm { background: var(--warn); }
+.barfill.cold { background: var(--success); }
+
+/* ============================================================
+   Manual Pick（自选号码）
+   ============================================================ */
+.manual-count-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.manual-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.manual-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-soft);
+  min-width: 44px;
+  white-space: nowrap;
+}
+.manual-row input {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 14px;
+  background: var(--card);
+  color: var(--text);
+}
+.manual-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.manual-main { flex: 1; min-width: 0; }
+.manual-extra { width: 78px; flex-shrink: 0; }
+.manual-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+#manual-msg.error { color: var(--warn); }
+#manual-msg.ok { color: var(--success); }

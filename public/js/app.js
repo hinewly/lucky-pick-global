@@ -33,10 +33,12 @@
     saveLimitKey: 'luckyPick.savelimit.v1',
     genLimitKey: 'luckyPick.genlimit.v1',
     dataSource: { powerball: 'live', megamillions: 'live', euromillions: 'seed', uklotto: 'seed' },
+    freqLookback: 50,     // 频率统计窗口
+    manualCount: 2,       // 自选号码注数
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v41';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
+  const APP_VERSION = 'v45';   // 版本号，每次发版 bump（跟 service-worker.js CACHE_VERSION 同步）
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -885,6 +887,136 @@
     const meta = el('div', { class: 'meta-note muted' + (source === 'seed' ? ' demo-source' : ''),
       text: 'Showing latest ' + recent.length + ' draws · ' + sourceText });
     container.appendChild(meta);
+
+    renderFreqStats();
+  }
+
+  // ============================================================
+  // Frequency Stats（热/温/冷）
+  // ============================================================
+  function renderFreqStats() {
+    const wrap = $('freq-grid');
+    if (!wrap) return;
+    const game = state.game;
+    const cfg = Engine.GAMES[game];
+    const history = state.history[game];
+    if (!cfg || !history || !history.length) { wrap.innerHTML = ''; return; }
+
+    const lb = Math.min(state.freqLookback || 50, history.length);
+    const lbEl = $('freq-lb');
+    if (lbEl) lbEl.textContent = lb;
+
+    // 数据顺序 [最新,...,最旧]，取前 lb 期
+    const rec = history.slice(0, lb);
+    const mainCnt = {}, extraCnt = {};
+    for (const d of rec) {
+      (d.main || []).forEach(n => { mainCnt[n] = (mainCnt[n] || 0) + 1; });
+      (d.extra || []).forEach(n => { extraCnt[n] = (extraCnt[n] || 0) + 1; });
+    }
+    const mainSize = cfg.mainRange[1] - cfg.mainRange[0] + 1;
+    const extraSize = cfg.extraRange[1] - cfg.extraRange[0] + 1;
+    const expMain = lb * cfg.mainCount / mainSize;
+    const expExtra = lb * cfg.extraCount / extraSize;
+
+    let html = '<div class="freq-title">Main numbers (' + cfg.mainRange[0] + '–' + cfg.mainRange[1] + ')</div><div class="freq-grid">';
+    for (let n = cfg.mainRange[0]; n <= cfg.mainRange[1]; n++) html += freqCell(n, mainCnt[n] || 0, expMain);
+    html += '</div><div class="freq-title">' + (cfg.extraPlural || cfg.extraName) + ' (' + cfg.extraRange[0] + '–' + cfg.extraRange[1] + ')</div><div class="freq-grid">';
+    for (let n = cfg.extraRange[0]; n <= cfg.extraRange[1]; n++) html += freqCell(n, extraCnt[n] || 0, expExtra);
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function freqCell(n, cnt, exp) {
+    let tier = 'warm';
+    if (exp > 0 && cnt > exp * 1.3) tier = 'hot';
+    else if (exp > 0 && cnt < exp * 0.7) tier = 'cold';
+    const pct = Math.min(100, Math.round(cnt / (exp * 1.3 || 1) * 100));
+    return '<div class="freq-cell"><div class="top"><span class="' + tier + '">' + n +
+      '</span><span class="' + tier + ' cnt">' + cnt + '</span></div>' +
+      '<div class="barbg"><div class="barfill ' + tier + '" style="width:' + pct + '%"></div></div></div>';
+  }
+
+  // ============================================================
+  // Manual Pick（自选号码）
+  // ============================================================
+  function renderManualInputs() {
+    const box = $('manual-inputs');
+    if (!box) return;
+    const cfg = Engine.GAMES[state.game];
+    if (!cfg) return;
+    const n = state.manualCount || 2;
+    // 示例：7 的倍数（clamp 到范围内）
+    const ex = [];
+    for (let i = 1; ex.length < cfg.mainCount; i++) {
+      const v = 7 * i;
+      if (v >= cfg.mainRange[0] && v <= cfg.mainRange[1]) ex.push(v);
+    }
+    const exStr = ex.join(' ');
+    const exExtra = Math.round((cfg.extraRange[0] + cfg.extraRange[1]) / 2);
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      html += '<div class="manual-row">' +
+        '<span class="manual-label">Set ' + (i + 1) + '</span>' +
+        '<input class="manual-main" inputmode="numeric" autocomplete="off" placeholder="' +
+          cfg.mainCount + ' numbers ' + cfg.mainRange[0] + '-' + cfg.mainRange[1] + ', e.g. ' + exStr + '">' +
+        '<input class="manual-extra" inputmode="numeric" autocomplete="off" placeholder="' +
+          cfg.extraName + ' e.g. ' + exExtra + '">' +
+        '</div>';
+    }
+    box.innerHTML = html;
+    const msg = $('manual-msg');
+    if (msg) { msg.textContent = ''; msg.className = 'muted small'; }
+  }
+
+  function useManualNumbers() {
+    const cfg = Engine.GAMES[state.game];
+    if (!cfg) return;
+    const rows = document.querySelectorAll('#manual-inputs .manual-row');
+    const msg = $('manual-msg');
+    const sets = [];
+    for (let i = 0; i < rows.length; i++) {
+      const mainRaw = (rows[i].querySelector('.manual-main').value || '').trim();
+      const extraRaw = (rows[i].querySelector('.manual-extra').value || '').trim();
+      if (!mainRaw && !extraRaw) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ' is empty — fill it or reduce set count.'; msg.className = 'muted small error'; }
+        return;
+      }
+      const main = mainRaw.split(/[^0-9]+/).filter(Boolean).map(Number);
+      const extra = extraRaw.split(/[^0-9]+/).filter(Boolean).map(Number);
+      if (main.length !== cfg.mainCount) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': need exactly ' + cfg.mainCount + ' main numbers (got ' + main.length + ').'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (new Set(main).size !== main.length) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': duplicate main numbers.'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (main.some(v => v < cfg.mainRange[0] || v > cfg.mainRange[1])) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': main numbers must be ' + cfg.mainRange[0] + '-' + cfg.mainRange[1] + '.'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (extra.length !== cfg.extraCount) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': need ' + cfg.extraCount + ' ' + (cfg.extraPlural || cfg.extraName) + ' (got ' + extra.length + ').'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (extra.some(v => v < cfg.extraRange[0] || v > cfg.extraRange[1])) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': ' + cfg.extraName + ' must be ' + cfg.extraRange[0] + '-' + cfg.extraRange[1] + '.'; msg.className = 'muted small error'; }
+        return;
+      }
+      sets.push({
+        game: state.game,
+        gameName: cfg.name,
+        main: main.sort((a, b) => a - b),
+        extra: extra.sort((a, b) => a - b),
+        extraName: cfg.extraName,
+        manual: true,
+      });
+    }
+    state.sets = sets;
+    renderResults();
+    if (msg) { msg.textContent = '✅ Applied — see Your Numbers below.'; msg.className = 'muted small ok'; }
+    const rc = $('results-card');
+    if (rc && rc.scrollIntoView) rc.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ============================================================
@@ -1195,7 +1327,7 @@
         if (Engine.GAMES[g]) {
           state.game = g;
           document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === g));
-          renderFactors(); renderResults(); renderRecent(); renderSavedNumbers(); saveState(); updateDebug();
+          renderFactors(); renderResults(); renderRecent(); renderManualInputs(); renderSavedNumbers(); saveState(); updateDebug();
         }
       });
     });
@@ -1204,6 +1336,30 @@
     });
     const genBtn = $('btn-generate');
     if (genBtn) genBtn.addEventListener('click', generate);
+
+    // Frequency stats 窗口切换
+    document.querySelectorAll('#freq-lookback button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.freqLookback = parseInt(btn.dataset.lb, 10) || 50;
+        document.querySelectorAll('#freq-lookback button').forEach(b => b.classList.toggle('active', b === btn));
+        renderFreqStats();
+      });
+    });
+
+    // Manual pick
+    const manualCountEl = $('manual-count');
+    if (manualCountEl) {
+      manualCountEl.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.manualCount = parseInt(btn.dataset.n, 10) || 2;
+          manualCountEl.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+          renderManualInputs();
+        });
+      });
+    }
+    const useManualBtn = $('btn-use-manual');
+    if (useManualBtn) useManualBtn.addEventListener('click', useManualNumbers);
+    renderManualInputs();
     const mask = $('modal-mask');
     if (mask) mask.addEventListener('click', e => { if (e.target === mask) closeModal(); });
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.game === state.game));
@@ -1233,6 +1389,6 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  global.LuckyApp = { state, addFactor, removeFactor, generate };
+  global.LuckyApp = { state, addFactor, removeFactor, generate, renderFreqStats, renderManualInputs, useManualNumbers };
 
 })(typeof window !== 'undefined' ? window : globalThis);

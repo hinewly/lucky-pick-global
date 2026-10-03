@@ -65,12 +65,13 @@
 - **状态**: 用户操作
 - **内容**: 提交 Product Hunt（免费 PWA / no signup / entertainment tool 定位）
 
-### 9. EuroMillions + UK Lotto 真实数据抓取
-- **状态**: 待做
-- **内容**: 
-  - `src/fetch_global.mjs` 里 `parseEuroMillions` / `parseUkLotto` 是占位
-  - 需要看真实站点 DOM 写 parser
-  - `.github/workflows/weekly-fetch.yml` 加入 EU 数据抓取
+### 9. EuroMillions + UK Lotto 数据源
+- **状态**: 待做（部分进展 2026-10-03）
+- **内容**:
+  - lotteryusa / euro-millions / national-lottery 都会拦 Cloudflare Worker IP
+  - PB/MM 已改用 data.ny.gov 官方 JSON API（成功）
+  - EU/UK 需要找各自的官方开放数据 API
+- **另**: 数据抓取已从 GitHub Actions 迁到 Cloudflare Cron（每周一 01:00 UTC）+ KV 实时供应
 
 ### 10. Capacitor 打包 iOS App
 - **状态**: 远期
@@ -83,6 +84,12 @@
 - **前提**: 第 10 项完成
 
 ---
+
+### 12. 频率统计 + 自选号码（借鉴国内版）
+- **状态**: ✅ 已完成 2026-10-03
+- Recent Draws 卡片内新增 Frequency Stats（20/50 期窗口，hot/warm/cold 颜色标记）
+- 新增 "Or Enter Your Own" 自选号码卡片（1-3 注，校验范围/去重/个数，直接进结果区可保存/导图）
+- 前端数据已切到 KV 实时供应（60 期最新数据）
 
 ## 已完成 ✅
 
