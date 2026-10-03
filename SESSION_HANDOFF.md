@@ -11,7 +11,7 @@
 - **Live URL**: https://lucky.daobox.app ← 主站（用户日常看这个）
 - **GitHub Pages 备份**: https://hinewly.github.io/lucky-pick-global/
 - **GitHub**: https://github.com/hinewly/lucky-pick-global
-- **产品版本**: v1.0（显示用）；SW 缓存版本 v49（内部递增，两者已解耦）
+- **产品版本**: v1.0（显示用）；SW 缓存版本 v50（内部递增，两者已解耦）
 - **定位**: "Don't just leave it to chance — put yourself into your numbers." / Intentional picks, not blind luck
 
 ## ⚙️ 基础设施（重要，接手必读）
@@ -55,7 +55,7 @@
 
 ## 📋 下一步（按优先级，详见 TODO.md）
 
-1. **SEO 基础优化**（下一个要做，20 分钟）：meta 标签 + sitemap.xml + robots.txt + 用户提交 Search Console
+1. ~~SEO 基础优化~~ ✅ 已完成 2026-10-03：meta/OG/Twitter/canonical + robots.txt + sitemap.xml 已上线（SW v50）。剩用户手动提交 Google Search Console（sitemap: https://lucky.daobox.app/sitemap.xml）
 2. **Pro 付费**：等用户注册 Gumroad/Lemon Squeezy → 解锁码方案（激活码验证可走 Worker API）
    - 定价已有：Starter $12.99/10 saves、Standard $29.99/30、Heavy $69.99/100
    - Pro 解锁点 = 每日保存额度（免费 3/天）

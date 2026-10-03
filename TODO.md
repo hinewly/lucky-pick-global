@@ -16,11 +16,8 @@
 - **结果**: Tip 卡片内已有二维码（icons/paypal-qr.png），支持手机扫码
 
 ### 3. SEO 基础优化
-- **状态**: 待做
-- **内容**: 
-  - index.html 加完整 meta 标签（title / description / keywords / og: / twitter:）
-  - 添加 `sitemap.xml` 和 `robots.txt`
-  - 用户手动提交 Google Search Console
+- **状态**: ✅ 已完成 2026-10-03（meta/OG/Twitter/canonical + robots.txt + sitemap.xml 已上线并验证；SW v50）
+- **剩余**: 用户手动提交 Google Search Console（https://search.google.com/search-console ，提交 https://lucky.daobox.app/sitemap.xml ）
 - **预计**: 20 分钟
 
 ---
