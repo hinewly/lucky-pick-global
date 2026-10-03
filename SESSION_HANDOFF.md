@@ -59,9 +59,11 @@
 2. **Pro 付费（进行中）**：LS 商店 luckypickglobal 已建，PayPal 收款已绑定，商品文案见 docs/ls-products.md
    - 钱路：买家 → LS → PayPal(hinewly@163.com) → 万里汇美元账号(待激活) → 国内卡
    - 等用户：税表 W-8BEN、2FA、Activate Store 身份验证 → 然后建 5 个商品
-3. **万里汇（WorldFirst）**：个人"跨境电商"通道注册，实名审核中（2026-10-03 提交，当天 18:00 前或 1-2 工作日出结果）
-   - 注意：当初 B2B 通道要营业执照（用户没公司）；数娱出海是给 App Store/广告变现开发者的，都不适用
-   - PayPal 提现配置：把 WF 美元账号当"美国银行账户"加进 PayPal
+3. **万里汇（WorldFirst）**：账户已激活！提现收款人已绑支付宝；美元收款账号（自建站）申请审核中
+   - 注意：账户类型显示"开发者账户"（来源待确认）；B2B 要营业执照、数娱出海不适合，最终走"跨境电商"个人通道
+   - "出口退税/离岸人民币"提示与个人虚拟商品无关，选人民币即可
+   - 通过后：把美元账号当"美国银行账户"加进 PayPal 提现 → 钱路全通
+   - 如待办"同名银行账户"仍挂起 → 补绑本人银行卡收款人
 4. **EuroMillions/UK Lotto 数据源**：原网站拦 Cloudflare IP，需找官方开放 API
 5. Reddit/Product Hunt 推广（SEO 完成后）
 6. 远期：Capacitor iOS 打包 → App Store StoreKit
