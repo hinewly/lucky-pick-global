@@ -200,7 +200,7 @@
     container.innerHTML = '';
 
     if (state.sets.length === 0) {
-      container.appendChild(el('div', { class: 'muted center', text: 'Click the button above to generate your lucky numbers' }));
+      container.appendChild(el('div', { class: 'muted center', text: 'No numbers yet — tap Generate above, or type your own in "Or Enter Your Own".' }));
       return;
     }
 
