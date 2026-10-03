@@ -55,12 +55,14 @@
 
 ## 📋 下一步（按优先级，详见 TODO.md）
 
-1. ~~SEO 基础优化~~ ✅ 已完成 2026-10-03：meta/OG/Twitter/canonical + robots.txt + sitemap.xml 已上线（SW v50）。剩用户手动提交 Google Search Console（sitemap: https://lucky.daobox.app/sitemap.xml）
-2. **Pro 付费**：等用户注册 Gumroad/Lemon Squeezy → 解锁码方案（激活码验证可走 Worker API）
-   - 定价已有：Starter $12.99/10 saves、Standard $29.99/30、Heavy $69.99/100
-   - Pro 解锁点 = 每日保存额度（免费 3/天）
-3. **EuroMillions/UK Lotto 数据源**：原网站拦 Cloudflare IP，需找官方开放 API
-4. Payoneer 提现（用户自己操作）；USDT 地址（等用户提供）
+1. ~~SEO 基础优化~~ ✅ 已完成 2026-10-03：已上线（SW v50）。剩用户手动提交 Google Search Console
+2. **Pro 付费（进行中）**：LS 商店 luckypickglobal 已建，PayPal 收款已绑定，商品文案见 docs/ls-products.md
+   - 钱路：买家 → LS → PayPal(hinewly@163.com) → 万里汇美元账号(待激活) → 国内卡
+   - 等用户：税表 W-8BEN、2FA、Activate Store 身份验证 → 然后建 5 个商品
+3. **万里汇（WorldFirst）**：个人"跨境电商"通道注册，实名审核中（2026-10-03 提交，当天 18:00 前或 1-2 工作日出结果）
+   - 注意：当初 B2B 通道要营业执照（用户没公司）；数娱出海是给 App Store/广告变现开发者的，都不适用
+   - PayPal 提现配置：把 WF 美元账号当"美国银行账户"加进 PayPal
+4. **EuroMillions/UK Lotto 数据源**：原网站拦 Cloudflare IP，需找官方开放 API
 5. Reddit/Product Hunt 推广（SEO 完成后）
 6. 远期：Capacitor iOS 打包 → App Store StoreKit
 

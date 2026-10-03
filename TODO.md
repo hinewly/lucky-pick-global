@@ -24,17 +24,26 @@
 
 ## 🟡 中优先级（Pro 付费闭环）
 
-### 4. Pro 付费 — Gumroad / Lemon Squeezy 解锁码
-- **状态**: 待做
-- **内容**: 用户在 Gumroad/Lemon Squeezy 购买解锁码 → 在站内输入码解锁 Pro
-- **前提**: 用户先去注册 Gumroad 或 Lemon Squeezy 账号
+### 4. Pro 付费 — Lemon Squeezy 解锁码
+- **状态**: 🔶 进行中 2026-10-03
+- **进展**: LS 账号已注册+邮箱验证；商店 luckypickglobal 已创建；PayPal 收款已绑定 (hinewly@163.com)
+  - 注意：LS 对中国卖家不支持银行收款，只支持 PayPal（万里汇美元账号没法直连 LS，改走 PayPal 中转）
+  - 商品文案已备好：docs/ls-products.md
+- **待办**:
+  1. 用户提交税表 W-8BEN（Payouts 页黄条 "Submit your tax information"）
+  2. 用户设置 2FA（清单第 4 步 Configure）
+  3. 用户点 Activate Store 完成身份验证
+  4. 解锁后建 5 个商品（3 个 Pro 档 + 2 个打赏，文案见 docs/ls-products.md）
+  5. 站内开发兑换流程：license key 输入框 + Worker `/api/license/activate`
 - **技术方案**:
   - 简单版：硬编码一批激活码在 JS 里（不安全但能用）
   - 正式版：接入 Worker API 验证激活码（像 vocab-pwa 那样）
 - **定价（弹窗里已有）**: Starter $12.99 / Standard $29.99 / Heavy $69.99
 
-### 5. Payoneer 提现链路
-- **状态**: 用户操作
+### 5. 收款账户（万里汇 WorldFirst）
+- **状态**: 🔶 审核中 2026-10-03（已提交实名认证材料，当天 18:00 前出结果，最迟 1-2 个工作日）
+- **进展**: 走"跨境电商"个人流程注册（公司名填"无"），B2B/数娱出海通道均不适用
+- **审核通过后**: 拿美元收款账号 → 加到 PayPal 提现（作为美国银行账户）→ 国内卡
 - **内容**: 注册 Payoneer → 实名认证 → 绑国内银行卡 → PayPal 后台添加提现账户
 - **说明**: 代码无需改动，用户自己操作
 - **提醒**: 攒够金额再提，别每笔都提
