@@ -1022,6 +1022,398 @@
   // ============================================================
   // Modal for adding factors
   // ============================================================
+  // ============================================================
+  // Inline factor input（替代弹窗：点按钮直接在下方出现输入框）
+  // ============================================================
+  let inlineType = null;  // 当前展开的输入类型
+
+  function openAddModal(type) {
+    const area = $('factor-inline');
+    if (!area) return;
+
+    // 再次点击同一按钮 → 收起（toggle）
+    if (inlineType === type && area.style.display !== 'none') {
+      hideFactorInline();
+      return;
+    }
+    inlineType = type;
+
+    // 高亮当前按钮
+    document.querySelectorAll('[data-add-factor]').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.addFactor === type);
+    });
+
+    let body = '';
+    if (type === 'lucky' || type === 'avoid') {
+      const cfg = Engine.GAMES[state.game];
+      const max = cfg ? cfg.mainRange[1] : 69;
+      body = '<input type="text" id="inline-input" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="Any digits (1-' + max + '), press Add" autocomplete="off" />';
+    } else if (type === 'date') {
+      body = '<input type="date" id="inline-input" value="' + new Date().toISOString().slice(0,10) + '" />';
+    } else if (type === 'zodiac') {
+      const opts = Object.entries(Engine.ZODIAC_NUMBERS)
+        .map(([k, v]) => '<option value="' + k + '">' + v.name + ' (' + v.numbers.join(' ') + ')</option>')
+        .join('');
+      body = '<select id="inline-input">' + opts + '</select>';
+    } else if (type === 'dream') {
+      body = '<input type="text" id="inline-input" maxlength="256" placeholder="Dream keywords, e.g. water fish (space separated)" autocomplete="off" />';
+    } else if (type === 'lifepath') {
+      body = '<input type="date" id="inline-input" value="1990-01-01" />';
+    } else if (type === 'lyrics') {
+      body = '<textarea id="inline-input" rows="2" maxlength="256" placeholder="A lyric or phrase (e.g. hello darkness my old friend)"></textarea>';
+    }
+
+    area.innerHTML =
+      '<div class="factor-inline-box">' +
+        body +
+        '<div class="factor-inline-actions">' +
+          '<button class="inline-add" id="inline-add">Add</button>' +
+          '<button class="inline-cancel" id="inline-cancel">Cancel</button>' +
+          '<span class="inline-msg" id="inline-msg"></span>' +
+        '</div>' +
+      '</div>';
+    area.style.display = '';
+
+    const input = $('inline-input');
+    if (input) input.focus();
+
+    $('inline-cancel').onclick = hideFactorInline;
+    $('inline-add').onclick = () => inlineAddConfirm(type);
+    if (input) input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') inlineAddConfirm(type);
+    });
+  }
+
+  function hideFactorInline() {
+    inlineType = null;
+    const area = $('factor-inline');
+    if (area) { area.style.display = 'none'; area.innerHTML = ''; }
+    document.querySelectorAll('[data-add-factor]').forEach(btn => btn.classList.remove('active'));
+  }
+
+  function inlineMsg(text, isError) {
+    const el = $('inline-msg');
+    if (!el) return;
+    el.textContent = text;
+    el.className = 'inline-msg' + (isError ? ' error' : ' ok');
+  }
+
+  function inlineAddConfirm(type) {
+    const val = (($('inline-input') || {}).value || '').trim();
+    let factor = null;
+    try {
+      if (type === 'lucky' || type === 'avoid') {
+        const cfg = Engine.GAMES[state.game];
+        const max = cfg ? cfg.mainRange[1] : 69;
+        const min = cfg ? cfg.mainRange[0] : 1;
+        const result = parseLuckyInput(val, min, max);
+        if (result.error) return inlineMsg(result.error, true);
+        const n = result.value;
+        const typeName = type === 'lucky' ? 'lucky numbers' : 'avoid numbers';
+        if (state.factors.some(f => f.type === type && f.data && f.data.includes(n))) {
+          return inlineMsg('Already added #' + n + ' to ' + typeName, true);
+        }
+        factor = type === 'lucky' ? Engine.makeLucky([n]) : Engine.makeAvoid([n]);
+        inlineMsg('✅ Added #' + n + ' — add another or Cancel', false);
+      }
+      else if (type === 'date') factor = Engine.makeDate(val);
+      else if (type === 'zodiac') factor = Engine.makeZodiac(val);
+      else if (type === 'dream') {
+        if (val.length > 256) return inlineMsg('Max 256 characters (you entered ' + val.length + ')', true);
+        const kws = val.split(/\s+/).filter(Boolean);
+        if (!kws.length) return inlineMsg('Enter at least one symbol', true);
+        factor = Engine.makeDream(kws);
+      }
+      else if (type === 'lifepath') factor = Engine.makeLifePath(val);
+      else if (type === 'lyrics') {
+        if (!val || val.length < 2) return inlineMsg('Type at least 2 characters', true);
+        if (val.length > 256) return inlineMsg('Max 256 characters (you entered ' + val.length + ')', true);
+        factor = Engine.makeLyrics(val);
+      }
+    } catch (e) { return inlineMsg('Parse error: ' + e.message, true); }
+    if (factor) {
+      addFactor(factor);
+      // lucky/avoid 可连续添加；其他类型加完自动收起
+      if (type !== 'lucky' && type !== 'avoid') hideFactorInline();
+      else {
+        const input = $('inline-input');
+        if (input) { input.value = ''; input.focus(); }
+      }
+    }
+  }
+
+  function renderSavedNumbers() {
+    const container = $('saved-list');
+    if (!container) return;
+    container.innerHTML = '';
+
+    const items = state.saved || [];
+    const status = saveLimitStatus();
+    const counterEl = $('save-counter');
+    if (counterEl) {
+      if (state.isPro) {
+        counterEl.innerHTML = '💎 <b>Pro</b> · Unlimited saves';
+        counterEl.className = 'save-counter pro';
+      } else {
+        counterEl.innerHTML = '💎 <b>' + status.remaining + ' / ' + FREE_SAVE_LIMIT + '</b> free saves today';
+        counterEl.className = 'save-counter' + (status.remaining === 0 ? ' exhausted' : '');
+      }
+    }
+    const upgradeBtn = $('upgrade-btn');
+    if (upgradeBtn) upgradeBtn.style.display = state.isPro ? 'none' : '';
+
+    if (items.length === 0) {
+      container.appendChild(el('div', { class: 'muted center saved-empty', text: 'No saved numbers yet. Tap 💾 Save on a generated set to keep it here.' }));
+      return;
+    }
+
+    items.forEach(item => {
+      const card = el('div', { class: 'saved-card' });
+      const head = el('div', { class: 'saved-head' }, [
+        el('span', { class: 'saved-date', text: new Date(item.savedAt).toLocaleString() }),
+        el('span', { class: 'scheme-tag', text: item.gameName }),
+      ]);
+      card.appendChild(head);
+
+      const balls = el('div', { class: 'balls' });
+      (item.main || []).forEach(n => balls.appendChild(el('span', { class: 'ball main', text: String(n).padStart(2, '0') })));
+      balls.appendChild(el('span', { class: 'ball divider', text: '|' }));
+      (item.extra || []).forEach(n => balls.appendChild(el('span', { class: 'ball extra', text: String(n).padStart(2, '0') })));
+      card.appendChild(balls);
+
+      if (item.factors && item.factors.length) {
+        card.appendChild(el('div', { class: 'saved-factors muted small', text: 'Factors: ' + item.factors.join(' · ') }));
+      }
+
+      const actions = el('div', { class: 'result-actions' });
+      actions.appendChild(el('button', {
+        class: 'action-btn',
+        onClick: () => copySetsToClipboardText(formatSetsText([item])),
+      }, ['📋 Copy']));
+      actions.appendChild(el('button', {
+        class: 'action-btn',
+        onClick: () => exportSingleSavedAsImage(item),
+      }, ['🖼️ Image']));
+      actions.appendChild(el('button', {
+        class: 'action-btn danger',
+        onClick: () => { if (confirm('Remove from library?')) removeSaved(item.id); },
+      }, ['🗑️']));
+      card.appendChild(actions);
+      container.appendChild(card);
+    });
+  }
+
+  // 在 Generate 按钮上方显示剩余次数
+  function renderGenCounter() {
+    const el = document.getElementById('gen-counter');
+    if (!el) return;
+    const status = genLimitStatus();
+    if (state.isPro) {
+      el.innerHTML = '💎 <b>Pro</b> · Unlimited generations';
+      el.className = 'gen-counter pro';
+    } else if (state.devMode) {
+      el.innerHTML = '🛠 <b>Dev Mode</b> · Unlimited (testing)';
+      el.className = 'gen-counter dev';
+    } else {
+      el.innerHTML = '🎯 <b>' + status.remaining + ' / ' + FREE_GEN_LIMIT + '</b> free Generations today';
+      el.className = 'gen-counter' + (status.remaining === 0 ? ' exhausted' : '');
+    }
+  }
+
+  function copySetsToClipboardText(text) {
+    const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(ta);
+      };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).catch(fallback);
+    } else fallback();
+    toast('📋 Copied');
+  }
+
+  function exportSingleSavedAsImage(item) {
+    const set = {
+      game: item.game,
+      gameName: item.gameName,
+      main: item.main,
+      extra: item.extra,
+      extraName: item.extraName,
+    };
+    exportSetsAsImage([set]);
+  }
+
+  function renderRecent() {
+    updateRecentTitle();
+    const container = $('freq');
+    if (!container) return;
+    container.innerHTML = '';
+    const game = state.game;
+    const history = state.history[game];
+    if (!history || history.length === 0) {
+      container.appendChild(el('div', { class: 'muted center', text: 'No historical data yet' }));
+      return;
+    }
+
+    const recent = Engine.recentDraws(history, 5);
+    const list = el('div', { class: 'recent-list' });
+    recent.forEach(draw => {
+      const line = el('div', { class: 'recent-item' }, [
+        el('span', { class: 'recent-issue', text: draw.date || '—' }),
+        el('div', { class: 'recent-balls' }, [
+          ...(draw.main || []).map(n => el('span', { class: 'mini-ball main', text: String(n).padStart(2, '0') })),
+          el('span', { class: 'mini-ball divider', text: '|' }),
+          ...(draw.extra || []).map(n => el('span', { class: 'mini-ball extra', text: String(n).padStart(2, '0') })),
+        ]),
+      ]);
+      list.appendChild(line);
+    });
+    container.appendChild(list);
+
+    const source = state.dataSource[game] || 'seed';
+    const sourceText = source === 'live'
+      ? 'Source: official lottery websites'
+      : 'Source: demo data (waiting for live fetcher to connect)';
+    const meta = el('div', { class: 'meta-note muted' + (source === 'seed' ? ' demo-source' : ''),
+      text: 'Showing latest ' + recent.length + ' draws · ' + sourceText });
+    container.appendChild(meta);
+
+    renderFreqStats();
+  }
+
+  // ============================================================
+  // Frequency Stats（热/温/冷）
+  // ============================================================
+  function renderFreqStats() {
+    const wrap = $('freq-grid');
+    if (!wrap) return;
+    const game = state.game;
+    const cfg = Engine.GAMES[game];
+    const history = state.history[game];
+    if (!cfg || !history || !history.length) { wrap.innerHTML = ''; return; }
+
+    const lb = Math.min(state.freqLookback || 50, history.length);
+    const lbEl = $('freq-lb');
+    if (lbEl) lbEl.textContent = lb;
+
+    // 数据顺序 [最新,...,最旧]，取前 lb 期
+    const rec = history.slice(0, lb);
+    const mainCnt = {}, extraCnt = {};
+    for (const d of rec) {
+      (d.main || []).forEach(n => { mainCnt[n] = (mainCnt[n] || 0) + 1; });
+      (d.extra || []).forEach(n => { extraCnt[n] = (extraCnt[n] || 0) + 1; });
+    }
+    const mainSize = cfg.mainRange[1] - cfg.mainRange[0] + 1;
+    const extraSize = cfg.extraRange[1] - cfg.extraRange[0] + 1;
+    const expMain = lb * cfg.mainCount / mainSize;
+    const expExtra = lb * cfg.extraCount / extraSize;
+
+    let html = '<div class="freq-title">Main numbers (' + cfg.mainRange[0] + '–' + cfg.mainRange[1] + ')</div><div class="freq-grid">';
+    for (let n = cfg.mainRange[0]; n <= cfg.mainRange[1]; n++) html += freqCell(n, mainCnt[n] || 0, expMain);
+    html += '</div><div class="freq-title">' + (cfg.extraPlural || cfg.extraName) + ' (' + cfg.extraRange[0] + '–' + cfg.extraRange[1] + ')</div><div class="freq-grid">';
+    for (let n = cfg.extraRange[0]; n <= cfg.extraRange[1]; n++) html += freqCell(n, extraCnt[n] || 0, expExtra);
+    html += '</div>';
+    wrap.innerHTML = html;
+  }
+
+  function freqCell(n, cnt, exp) {
+    let tier = 'warm';
+    if (exp > 0 && cnt > exp * 1.3) tier = 'hot';
+    else if (exp > 0 && cnt < exp * 0.7) tier = 'cold';
+    const pct = Math.min(100, Math.round(cnt / (exp * 1.3 || 1) * 100));
+    return '<div class="freq-cell"><div class="top"><span class="' + tier + '">' + n +
+      '</span><span class="' + tier + ' cnt">' + cnt + '</span></div>' +
+      '<div class="barbg"><div class="barfill ' + tier + '" style="width:' + pct + '%"></div></div></div>';
+  }
+
+  // ============================================================
+  // Manual Pick（自选号码）
+  // ============================================================
+  function renderManualInputs() {
+    const box = $('manual-inputs');
+    if (!box) return;
+    const cfg = Engine.GAMES[state.game];
+    if (!cfg) return;
+    const n = state.manualCount || 2;
+    // 示例：7 的倍数（clamp 到范围内）
+    const ex = [];
+    for (let i = 1; ex.length < cfg.mainCount; i++) {
+      const v = 7 * i;
+      if (v >= cfg.mainRange[0] && v <= cfg.mainRange[1]) ex.push(v);
+    }
+    const exStr = ex.join(' ');
+    const exExtra = Math.round((cfg.extraRange[0] + cfg.extraRange[1]) / 2);
+    let html = '';
+    for (let i = 0; i < n; i++) {
+      html += '<div class="manual-row">' +
+        '<span class="manual-label">Set ' + (i + 1) + '</span>' +
+        '<input class="manual-main" inputmode="numeric" autocomplete="off" placeholder="' +
+          cfg.mainCount + ' numbers ' + cfg.mainRange[0] + '-' + cfg.mainRange[1] + ', e.g. ' + exStr + '">' +
+        '<input class="manual-extra" inputmode="numeric" autocomplete="off" placeholder="' +
+          cfg.extraName + ' e.g. ' + exExtra + '">' +
+        '</div>';
+    }
+    box.innerHTML = html;
+    const msg = $('manual-msg');
+    if (msg) { msg.textContent = ''; msg.className = 'muted small'; }
+  }
+
+  function useManualNumbers() {
+    const cfg = Engine.GAMES[state.game];
+    if (!cfg) return;
+    const rows = document.querySelectorAll('#manual-inputs .manual-row');
+    const msg = $('manual-msg');
+    const sets = [];
+    for (let i = 0; i < rows.length; i++) {
+      const mainRaw = (rows[i].querySelector('.manual-main').value || '').trim();
+      const extraRaw = (rows[i].querySelector('.manual-extra').value || '').trim();
+      if (!mainRaw && !extraRaw) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ' is empty — fill it or reduce set count.'; msg.className = 'muted small error'; }
+        return;
+      }
+      const main = mainRaw.split(/[^0-9]+/).filter(Boolean).map(Number);
+      const extra = extraRaw.split(/[^0-9]+/).filter(Boolean).map(Number);
+      if (main.length !== cfg.mainCount) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': need exactly ' + cfg.mainCount + ' main numbers (got ' + main.length + ').'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (new Set(main).size !== main.length) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': duplicate main numbers.'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (main.some(v => v < cfg.mainRange[0] || v > cfg.mainRange[1])) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': main numbers must be ' + cfg.mainRange[0] + '-' + cfg.mainRange[1] + '.'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (extra.length !== cfg.extraCount) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': need ' + cfg.extraCount + ' ' + (cfg.extraPlural || cfg.extraName) + ' (got ' + extra.length + ').'; msg.className = 'muted small error'; }
+        return;
+      }
+      if (extra.some(v => v < cfg.extraRange[0] || v > cfg.extraRange[1])) {
+        if (msg) { msg.textContent = 'Set ' + (i + 1) + ': ' + cfg.extraName + ' must be ' + cfg.extraRange[0] + '-' + cfg.extraRange[1] + '.'; msg.className = 'muted small error'; }
+        return;
+      }
+      sets.push({
+        game: state.game,
+        gameName: cfg.name,
+        main: main.sort((a, b) => a - b),
+        extra: extra.sort((a, b) => a - b),
+        extraName: cfg.extraName,
+        manual: true,
+      });
+    }
+    state.sets = sets;
+    renderResults();
+    if (msg) { msg.textContent = '✅ Applied — see Your Numbers below.'; msg.className = 'muted small ok'; }
+    const rc = $('results-card');
+    if (rc && rc.scrollIntoView) rc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  // ============================================================
+  // Modal for adding factors
+  // ============================================================
   function openAddModal(type) {
     const mask = $('modal-mask');
     const modal = $('modal');
@@ -1389,6 +1781,6 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 
-  global.LuckyApp = { state, addFactor, removeFactor, generate, renderFreqStats, renderManualInputs, useManualNumbers };
+  global.LuckyApp = { state, addFactor, removeFactor, generate, renderFreqStats, renderManualInputs, useManualNumbers, hideFactorInline };
 
 })(typeof window !== 'undefined' ? window : globalThis);

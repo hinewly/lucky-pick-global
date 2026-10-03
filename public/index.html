@@ -111,6 +111,28 @@
     </div>
   </details>
 
+  <!-- ========== Manual Pick ========== -->
+  <section class="card" id="manual-card">
+    <h2>
+      <span class="num">✍️</span>
+      <span>Or Enter Your Own</span>
+      <span class="hint">Saw hot/cold numbers you like? Type them in</span>
+    </h2>
+    <div class="manual-count-row">
+      <span class="muted small">Sets:</span>
+      <div class="seg" id="manual-count">
+        <button data-n="1">1</button>
+        <button data-n="2" class="active">2</button>
+        <button data-n="3">3</button>
+      </div>
+    </div>
+    <div id="manual-inputs"></div>
+    <div class="manual-actions">
+      <button class="btn-primary" id="btn-use-manual">✅ Use These Numbers</button>
+      <span class="muted small" id="manual-msg"></span>
+    </div>
+  </section>
+
   <section class="card">
     <h2>
       <span class="num">2</span>
@@ -127,6 +149,9 @@
       <button class="add-btn" data-add-factor="lifepath">🔢 Life Path Number</button>
       <button class="add-btn" data-add-factor="lyrics">🎵 Lyric / Phrase</button>
     </div>
+
+    <!-- 内联输入区（替代弹窗） -->
+    <div id="factor-inline" style="display:none;"></div>
 
     <!-- 每个按钮的说明，可点击展开 / 收起 -->
     <details class="factor-help">
@@ -174,28 +199,6 @@
           </div>
       </div>
     </details>
-  </section>
-
-  <!-- ========== Manual Pick ========== -->
-  <section class="card" id="manual-card">
-    <h2>
-      <span class="num">✍️</span>
-      <span>Or Enter Your Own</span>
-      <span class="hint">Saw hot/cold numbers you like? Type them in</span>
-    </h2>
-    <div class="manual-count-row">
-      <span class="muted small">Sets:</span>
-      <div class="seg" id="manual-count">
-        <button data-n="1">1</button>
-        <button data-n="2" class="active">2</button>
-        <button data-n="3">3</button>
-      </div>
-    </div>
-    <div id="manual-inputs"></div>
-    <div class="manual-actions">
-      <button class="btn-primary" id="btn-use-manual">✅ Use These Numbers</button>
-      <span class="muted small" id="manual-msg"></span>
-    </div>
   </section>
 
   <!-- ========== Generate ========== -->
