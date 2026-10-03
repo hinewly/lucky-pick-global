@@ -1,0 +1,12 @@
+name = "lucky-pick-global"
+main = "src/index.js"
+compatibility_date = "2024-09-01"
+
+# 自定义域名（部署时自动配置 DNS + 证书）
+routes = [
+  { pattern = "lucky.daobox.app", custom_domain = true }
+]
+
+# 前端静态资源由 Worker 直接托管 → lucky.daobox.app 就是完整站点
+[assets]
+directory = "../public"

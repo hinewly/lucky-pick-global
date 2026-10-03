@@ -102,6 +102,15 @@ header.hero h1 .logo {
   font-size: 18px;
 }
 
+header.hero .tagline-intent {
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  font-style: italic;
+  margin: 4px 0 2px;
+  text-align: center;
+}
+
 header.hero .tagline {
   color: var(--text-soft);
   font-size: 13px;
