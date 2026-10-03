@@ -960,7 +960,7 @@
         '<input class="manual-main" inputmode="numeric" autocomplete="off" placeholder="' +
           cfg.mainCount + ' numbers ' + cfg.mainRange[0] + '-' + cfg.mainRange[1] + ', e.g. ' + exStr + '">' +
         '<input class="manual-extra" inputmode="numeric" autocomplete="off" placeholder="' +
-          cfg.extraName + ' e.g. ' + exExtra + '">' +
+          cfg.extraName + ' ' + cfg.extraRange[0] + '-' + cfg.extraRange[1] + ', e.g. ' + exExtra + '">' +
         '</div>';
     }
     box.innerHTML = html;
@@ -1352,7 +1352,7 @@
         '<input class="manual-main" inputmode="numeric" autocomplete="off" placeholder="' +
           cfg.mainCount + ' numbers ' + cfg.mainRange[0] + '-' + cfg.mainRange[1] + ', e.g. ' + exStr + '">' +
         '<input class="manual-extra" inputmode="numeric" autocomplete="off" placeholder="' +
-          cfg.extraName + ' e.g. ' + exExtra + '">' +
+          cfg.extraName + ' ' + cfg.extraRange[0] + '-' + cfg.extraRange[1] + ', e.g. ' + exExtra + '">' +
         '</div>';
     }
     box.innerHTML = html;

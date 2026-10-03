@@ -1803,8 +1803,8 @@ header.hero h1 .refresh-app-btn:disabled {
   outline: none;
   border-color: var(--accent);
 }
-.manual-main { flex: 1; min-width: 0; }
-.manual-extra { width: 78px; flex-shrink: 0; }
+.manual-main { flex: 5; min-width: 0; }
+.manual-extra { flex: 3; min-width: 0; }
 .manual-actions {
   display: flex;
   align-items: center;
