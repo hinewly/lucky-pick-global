@@ -1,163 +1,94 @@
 # LuckyPick Global — Session Handoff
 
 > 接手这个项目时读这份文档就能快速上手。
+> 最后更新：2026-10-03（大版本迭代日）
 
-## 项目状态 (2026-09-20)
+## 项目状态 (2026-10-03)
 
-**LuckyPick Global** — Personal lucky number picker for Powerball, Mega Millions,
-EuroMillions, UK Lotto. 纯前端 PWA on GitHub Pages.
+**LuckyPick Global** — Intentional lottery number picker (Powerball/MegaMillions).
+纯前端 PWA + Cloudflare Worker（静态托管 + Cron 数据抓取 + KV）。
 
-- **Live URL**: https://hinewly.github.io/lucky-pick-global/
+- **Live URL**: https://lucky.daobox.app ← 主站（用户日常看这个）
+- **GitHub Pages 备份**: https://hinewly.github.io/lucky-pick-global/
 - **GitHub**: https://github.com/hinewly/lucky-pick-global
-- **Owner**: hinewly (Chinese developer)
-- **Target users**: 海外 Powerball/MM/EuroMillions/UK Lotto 玩家 (English UI)
+- **产品版本**: v1.0（显示用）；SW 缓存版本 v49（内部递增，两者已解耦）
+- **定位**: "Don't just leave it to chance — put yourself into your numbers." / Intentional picks, not blind luck
 
-## 已完成功能 (latest commits, newest first)
+## ⚙️ 基础设施（重要，接手必读）
 
-| Commit | 内容 |
-|---|---|
-| `729629b` | docs: LOTTERIES.md reference |
-| `6428888` | chore: SW v25 |
-| `9632298` | hide USDT (等真实地址) |
-| `0d63a39` | chore: SW v24 |
-| `77ffc69` | feat: EuroMillions + UK Lotto + USDT |
-| `771af08` | chore: SW v23 |
-| `0e219b6` | dev mode shortcut (?dev=1) |
-| `7c52f27` | chore: SW v22 |
-| `3ea7c28` | fix: actually call dev mode functions |
-| `7a7f148` | dev mode shortcut (#/super) |
-| `b5d2113` | chore: SW v20 |
-| `9fab9a6` | 5/day generation limit + dev mode |
-| `35ea292` | ui: input limits (digits-only, max 9 / 256 chars) |
-| `2a3f34a` | hide lucky/avoid conversion details |
-| `ec7d097` | Lucky/Avoid accepts any number string (digital sum) |
-| `ac99d4b` | fix: lucky/avoid range game-specific |
-| `fc2cee1` | factor button help + single-number input |
-| `5a69339` | ui: Recent Draws above Add Personal Factors |
-| `51f0ed0` | Save to Library + daily free limit + Pro placeholder |
-| `1eba880` | lyrics factor + copy + export image |
-| `3d141e3` | one-click copy/save all + set count 1/3/5 |
-| `e54bd63` | SW v10 |
-| `d365cf3` | SW v11 |
-| `acb8476` | Recent Draws to 5, fix date wrapping |
-| `7c52f27` | SW v22 |
+- **Cloudflare API Token**: 存在 `/Users/zoujiean/CodeX/lucky-pick-global/.env`（已 gitignore）
+  - 永久有效，部署**不需要**用户再认证/点链接
+  - 用法：`export CLOUDFLARE_API_TOKEN=$(grep CLOUDFLARE_API_TOKEN .env | cut -d= -f2)`
+- **wrangler 路径**（未安装到本项目）：`/Users/zoujiean/CodeX/vocab-pwa/worker/node_modules/.bin/wrangler`
+- **wrangler 日志权限问题**：`~/Library/Preferences/.wrangler` 不可写时报 EPERM，
+  解决：命令前加 `XDG_CONFIG_HOME=/tmp/wrangler-cfg`
+- **KV namespace**: `LOTTERY_DATA` id=`a461eefd321f4182b16e3c2437fc1683`
+- **Cron**: 每周一 01:00 UTC，Worker `scheduled` handler 抓数据存 KV
+- **数据路由**: `/data/{game}.js` → KV 优先（响应头 `x-data-source: kv-live`），静态文件兜底
+  - wrangler.toml 里 `run_worker_first = ["/data/*", "/api/*"]` 是关键，没它静态资源会先拦走请求
+- **API 端点**: `/api/status`（数据状态）、`/api/fetch`（手动触发抓取）
+- **数据源**: Powerball=`data.ny.gov/resource/d6yy-54nr.json`、MegaMillions=`data.ny.gov/resource/5xaw-6ayf.json`
+  （纽约州官方开放数据，免费无反爬；lotteryusa.com 会拦 Cloudflare Worker IP，别用）
 
-## 当前功能 (全部已部署)
+## ✅ 今天完成的功能（2026-10-03）
 
-### 4 个彩票
-| 游戏 | 区域 | 格式 | 数据 |
-|---|---|---|---|
-| Powerball 🇺🇸 | US | 5/69 + 1/26 | seed 50 笔 |
-| Mega Millions 🇺🇸 | US | 5/70 + 1/25 | seed 50 笔 |
-| EuroMillions 🇪🇺 | EU | 5/50 + 2 Lucky Stars | seed 10 笔 |
-| UK Lotto 🇬🇧 | UK | 6/59 + 1 Bonus | seed 10 笔 |
+1. 部署到 lucky.daobox.app（原 GitHub Pages 计划变更）
+2. PayPal 打赏二维码（icons/paypal-qr.png → paypal.me/hinewly）
+3. 数据管道：GitHub Actions → Cloudflare Cron + KV 实时供应（60 期）
+4. Intentional 文案上线（tagline-intent 斜体 + tagline）
+5. **频率统计**：Recent Draws 卡内 20/50 期窗口，hot(>130%期望)/warm/cold(<70%) 色标网格
+6. **自选号码**："Or Enter Your Own" 卡（在 Recent Draws 之下、Factors 之上——用户特意要求这个位置）
+   - 1/2/3 注，校验个数/范围/重复，通过后进 Your Numbers 结果区
+7. 交互：因素添加从弹窗改**内联输入**（lucky/avoid 可连续加，Enter 提交，inline-msg 报错）
+8. 版本规范：显示 v1.0，内部 CACHE_VERSION 独立递增
 
-### Factor 系统
-- 🍀 Lucky # — 数字根算法（用户输入任意 ≤ 9 位数字，自动收成 [1, max]）
-- 🚫 Avoid # — 同 Lucky
-- 📅 Birthday / Date
-- ♈ Zodiac Sign (12 星座)
-- 💭 Dream Symbol
-- 🔢 Life Path Number
-- 🎵 Lyric / Phrase — 黑盒算法（text + 时间戳 + random salt）
+## 📁 关键文件
 
-### Generation 系统
-- 每次 Generate 1-10 套（默认 3，UI 可切 1/3/5）
-- 每套号码按游戏规则生成
-- Save to Library（每天 3/天免费，dev/pro 无限）
+- `public/index.html` — 页面结构（手填卡在 factors 之前）
+- `public/js/app.js` — 主逻辑（renderFreqStats / renderManualInputs / useManualNumbers / openAddModal=内联版）
+- `public/js/engine.js` — Engine.GAMES 配置 + 算法（不动 AI 部分——用户明确说过）
+- `public/service-worker.js` — CACHE_VERSION 每次发版 bump
+- `worker/src/index.js` — KV 数据服务 + cron 抓取 + 4 个 parser
+- `worker/wrangler.toml` — 路由/KV/cron/assets 配置
+- `TODO.md` — 待开发清单（状态已同步）
+- `public/data/*.js` — seed 数据（KV 没数据时的兜底）
 
-### Save to Library
-- 每天 3 次免费保存
-- 跨 session 保留
-- 每条可：复制 / 导出图片 / 删除
-- URL：`?dev=1` 切 dev mode（绕过所有限制，紫色虚线框提示）
+## 📋 下一步（按优先级，详见 TODO.md）
 
-### 导出图片
-- 单 set / 多 set 都支持
-- 多 set 时垂直排列
-- 输出 PNG 800x800+
+1. **SEO 基础优化**（下一个要做，20 分钟）：meta 标签 + sitemap.xml + robots.txt + 用户提交 Search Console
+2. **Pro 付费**：等用户注册 Gumroad/Lemon Squeezy → 解锁码方案（激活码验证可走 Worker API）
+   - 定价已有：Starter $12.99/10 saves、Standard $29.99/30、Heavy $69.99/100
+   - Pro 解锁点 = 每日保存额度（免费 3/天）
+3. **EuroMillions/UK Lotto 数据源**：原网站拦 Cloudflare IP，需找官方开放 API
+4. Payoneer 提现（用户自己操作）；USDT 地址（等用户提供）
+5. Reddit/Product Hunt 推广（SEO 完成后）
+6. 远期：Capacitor iOS 打包 → App Store StoreKit
 
-### Copy all
-- 一键复制所有 set 到剪贴板
+## 👤 用户偏好（务必遵守）
 
-### Dev Mode
-- URL: `https://.../?dev=1` (开) / `?dev=0` (关)
-- localStorage flag: `luckyPick.devMode`
-- 用于开发者测试，跳过所有限制
+- 大白话，避免技术黑话
+- **先讨论/确认再动手**
+- UI 反馈通过浏览器标注提意见，改完让他刷新验证
+- 不喜欢多余弹窗（因素输入已改内联）
+- 算法保持黑盒（不向用户暴露权重细节）
+- 部署链路已通，**不需要用户参与认证**（API Token 常驻 .env）
 
-### 收款
-- PayPal.me: paypal.me/hinewly (保留)
-- USDT (TRC20): 代码就绪但暂时注释掉（等真实地址）
+## 🔧 常用命令
 
-### GitHub Action
-- 每周一自动跑 fetcher + bump SW
-- `.github/workflows/weekly-fetch.yml`
-- 当前只抓 Powerball + Mega Millions (欧彩票 fetcher 是占位)
+```bash
+# 部署（项目根目录）
+export CLOUDFLARE_API_TOKEN=$(grep CLOUDFLARE_API_TOKEN .env | cut -d= -f2)
+cd worker && XDG_CONFIG_HOME=/tmp/wrangler-cfg /Users/zoujiean/CodeX/vocab-pwa/worker/node_modules/.bin/wrangler deploy
 
-### 数据源
-- `lotteryusa.com/powerball/year` — Powerball, Mega Millions
-- `euro-millions.com/en/results/history` — EuroMillions (TODO 实际 parser)
-- `national-lottery.co.uk/lotto/results` — UK Lotto (TODO 实际 parser)
+# 发版 bump（public/service-worker.js）
+CACHE_VERSION = 'vN+' 且 PRECACHE_URLS 里 ?v=N 同步替换
 
-## 项目结构
-
-```
-lucky-pick-global/
-├── public/
-│   ├── index.html          # 主页面 (English)
-│   ├── service-worker.js   # PWA offline cache (currently v25)
-│   ├── manifest.json
-│   ├── css/styles.css
-│   ├── js/
-│   │   ├── engine.js       # 核心算法 + 4 games config
-│   │   └── app.js          # UI 逻辑
-│   ├── data/
-│   │   ├── powerball.js    # 50 draws
-│   │   ├── megamillions.js # 50 draws
-│   │   ├── euromillions.js # 10 draws (seed)
-│   │   └── uklotto.js      # 10 draws (seed)
-│   └── icons/
-├── src/
-│   └── fetch_global.mjs    # 抓取脚本 (4 games 支持, EU parser 占位)
-├── .github/workflows/
-│   ├── deploy.yml          # GitHub Pages 自动部署
-│   └── weekly-fetch.yml    # 每周一自动抓数据
-├── README.md
-└── LOTTERIES.md           # 4 个彩票的完整规则文档
+# 提交推送（HTTP/2 偶发失败时用 1.1）
+git -c http.version=HTTP/1.1 push origin main
 ```
 
-## 已知 TODO（用户提过但没做）
+## 已知问题
 
-1. **欧彩票真实 fetcher** — `parseEuroMillions` 和 `parseUkLotto` 是占位，
-   需要根据真实站点 DOM 调整
-2. **GitHub Action 抓取欧彩票** — 当前 weekly-fetch.yml 只处理 PB/MM
-3. **USDT 真实地址** — 用户还没注册钱包
-4. **Capacitor 打包 iOS App** — 用户最终目标
-5. **接 StoreKit (Apple IAP)** — App Store 上架后
-6. **Pro 收费** — 用户在讨论中，暂未实现
-
-## 用户的沟通偏好
-
-- 喜欢**大白话**（避免技术黑话）
-- 喜欢**先讨论再实施**
-- 容易发现自己不喜欢某个功能（要求简化）
-- 中文母语者，但 App 是英文（面向海外用户）
-- 审美偏简：**modal 不要太多说明**，让用户看底下的 help
-- 喜欢**隐藏算法**（"你不用让用户知道我背后怎么算"）
-- 不喜欢暗黑设计（之前讨论过的"藏号码"被否决）
-
-## 用户的"超级用户"模式
-
-URL: `https://.../?dev=1` (绕过生成 + 保存的所有限制)
-
-## 下次继续的建议
-
-**先检查**：
-- 浏览器刷新后是否能正常显示 4 个 tabs
-- EuroMillions / UK Lotto 数据是否正确加载
-- Dev mode 切换是否正常
-
-**然后可以做**：
-- 写 EuroMillions / UK Lotto 真实 fetcher parser
-- 让 weekly-fetch.yml 也处理 EU games
-- 给 USDT 加真实地址
+- `git push` 偶发 `HTTP2 framing layer` 错误 → 加 `-c http.version=HTTP/1.1`
+- EuroMillions/UK Lotto fetch 404（源站拦 Worker IP），`/api/fetch` 会返回 404——不是 bug，待换数据源
+- 沙盒对 `.git`、`~/Library/Preferences` 等路径默认只读，需要时用 request_permissions 申请
