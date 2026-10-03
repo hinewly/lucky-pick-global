@@ -8,17 +8,12 @@
 ## 🔴 高优先级（变现 + 上线）
 
 ### 1. 部署到 daobox.app 子域名
-- **状态**: 待做
-- **内容**: 用 Cloudflare Workers 把 lucky-pick-global 部署到 `lucky.daobox.app`（或用户选定的子域名）
-- **做法**: 参考 vocab-pwa 的 wrangler.toml，最小 Worker 只托管静态文件（public/ 目录）
-- **依赖**: 用户确认子域名名字
-- **预计**: 半小时以内
+- **状态**: ✅ 已完成 2026-10-03
+- **结果**: https://lucky.daobox.app （Cloudflare Workers 托管，API Token 已配置永久免认证）
 
 ### 2. PayPal 打赏卡片加二维码
-- **状态**: 待做
-- **内容**: 在 Tip 卡片里放一张 PayPal.me/hinewly 的二维码，桌面用户用手机扫码即可打赏
-- **做法**: 生成二维码 PNG 放入 `public/icons/`，HTML 加 `<img>` 标签
-- **预计**: 10 分钟
+- **状态**: ✅ 已完成 2026-10-03
+- **结果**: Tip 卡片内已有二维码（icons/paypal-qr.png），支持手机扫码
 
 ### 3. SEO 基础优化
 - **状态**: 待做
