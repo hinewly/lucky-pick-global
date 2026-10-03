@@ -2,11 +2,22 @@ name = "lucky-pick-global"
 main = "src/index.js"
 compatibility_date = "2024-09-01"
 
-# 自定义域名（部署时自动配置 DNS + 证书）
+# 自定义域名
 routes = [
   { pattern = "lucky.daobox.app", custom_domain = true }
 ]
 
-# 前端静态资源由 Worker 直接托管 → lucky.daobox.app 就是完整站点
+# KV：存抓取到的最新开奖数据
+[[kv_namespaces]]
+binding = "LOTTERY_DATA"
+id = "a461eefd321f4182b16e3c2437fc1683"
+
+# Cron：每周一 01:00 UTC（北京时间周一 09:00）
+[triggers]
+crons = ["0 1 * * 1"]
+
+# 前端静态资源（带 binding → Worker 先运行，由代码决定何时回源到静态文件）
 [assets]
 directory = "../public"
+run_worker_first = ["/data/*", "/api/*"]
+binding = "ASSETS"
