@@ -8,3 +8,4 @@ node_modules/
 .env
 worker/.wrangler/
 .wrangler/
+wf-usd-account.txt
