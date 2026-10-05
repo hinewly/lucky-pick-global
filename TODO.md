@@ -24,21 +24,32 @@
 
 ## 🟡 中优先级（Pro 付费闭环）
 
-### 4. Pro 付费 — Lemon Squeezy 解锁码
-- **状态**: 🔶 进行中 2026-10-03
-- **进展**: LS 账号已注册+邮箱验证；商店 luckypickglobal 已创建；PayPal 收款已绑定 (hinewly@163.com)
-  - 注意：LS 对中国卖家不支持银行收款，只支持 PayPal（万里汇美元账号没法直连 LS，改走 PayPal 中转）
-  - 商品文案已备好：docs/ls-products.md
-- **待办（用户下次回来，按顺序）**:
-  1. **填税表 W-8BEN**：Payouts 页黄条 "Submit your tax information" → Individual / China / 拼音名 (Guangfan Zou) / 国内地址拼音 / 无美国税号 / 打字签名
-  2. **设 2FA**：设置清单第 4 步 Configure（需手机装验证器 App）
-  3. **Activate Store** 身份验证
-  4. 解锁后建 5 个商品（3 个 Pro 档 + 2 个打赏，文案见 docs/ls-products.md）
-  5. 站内开发兑换流程：license key 输入框 + Worker `/api/license/activate`
-- **备选计划**: 注册 Gumroad 作第二通道（支持直填万里汇美元账号打款，少绕 PayPal 一道弯）
-- **技术方案**:
-  - 简单版：硬编码一批激活码在 JS 里（不安全但能用）
+### 4. Pro 付费 — 销售平台收款
+- **状态**: 🔶 LS 被卡，转 Paddle 备选（2026-10-05 更新）
+- **LS 当前状态（2026-10-05）**:
+  - LS 账号已注册、商店 luckypickglobal 已创建、PayPal 收款已绑定 (hinewly@163.com)
+  - ⛔ **Activate Store 身份验证被卡**：验证流程走 Stripe，Stripe 提示 "payouts not available in your country"（中国不支持）
+  - ⛔ **税表 W-8BEN 被卡**：税表也是 Stripe 内嵌表单，加载报错 "Unable to set up tax form"
+  - VPN 没用：Stripe 看的是商店注册国家（中国），不是 IP
+  - ✅ 已发邮件给 LS 客服 (support@lemonsqueezy.com) 问中国卖家怎么完成验证和税表，等回复（1-2 工作日）
+  - LS 官方文档确认：中国不在银行打款支持列表，PayPal 打款支持 200+ 国家
+- **Plan B: Paddle（推荐）**:
+  - 中国独立开发者用得最多的 MoR 平台
+  - 身份验证不走 Stripe，自己做审核，中国个人开发者可注册
+  - 打款走 Payoneer（派安盈）→ 提现到国内银行卡，成熟路线
+  - 商品文案直接复用 docs/ls-products.md，把 LS 换成 Paddle 即可
+- **Plan C: Gumroad**: PayPal 收款，可作为第二通道
+- **Plan D: USDT**: app 里已写好收款代码（index.html 注释区），就差填 TRC20 地址，永远不会被卡
+- **节后行动顺序（按优先级）**:
+  1. 等 LS 客服邮件回复 → 有方案就继续 LS
+  2. 问万里汇客服：PayPal 能不能绑万里汇 Citibank 美元账户（话术见 docs/payment-support-questions.md 第 1 部分）
+  3. 问 PayPal 中国客服：跨境人民币结算选哪个行业编码（同文件第 3 部分）
+  4. 注册 Payoneer（免费）：就算不走 Paddle，Payoneer 也是收款基础设施，兼容性好
+  5. LS 确认走不通 → 注册 Paddle，重新走验证 + 建商品 + 接 Payoneer
+  6. 全部不行 → USDT 兜底
+- **技术方案（无论哪个平台都一样）**:
   - 正式版：接入 Worker API 验证激活码（像 vocab-pwa 那样）
+  - 简单版：硬编码一批激活码在 JS 里（不安全但能用）
 - **定价（弹窗里已有）**: Starter $12.99 / Standard $29.99 / Heavy $69.99
 
 ### 5. 收款账户（万里汇 WorldFirst）
@@ -54,7 +65,9 @@
   - ✅ 提示"人民币 vs 离岸人民币/出口退税"与个人虚拟商品卖家无关，选人民币即可
   - ⏳ **美元收款账号申请审核中**（自建站；通过后在"资金管理"可见 Bank Name / Routing Number / Account Number）
 - **审核通过后**: 拿美元收款账号 → 加到 PayPal 提现（作为美国银行账户）→ 钱到万里汇 → 提现到支付宝/银行卡
-- **内容**: 注册 Payoneer → 实名认证 → 绑国内银行卡 → PayPal 后台添加提现账户
+- **2026-10-05 补充**: 
+  - ⚠️ PayPal 绑万里汇 Citibank 美元账户失败（PayPal 报"您需要一些帮助才能关联此账户"），节后问万里汇客服
+  - 建议同时注册 **Payoneer**：兼容性比万里汇好，Paddle 直打 Payoneer，国内提现成熟
 - **说明**: 代码无需改动，用户自己操作
 - **提醒**: 攒够金额再提，别每笔都提
 

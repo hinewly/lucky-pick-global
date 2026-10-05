@@ -1,7 +1,7 @@
 # LuckyPick Global — Session Handoff
 
 > 接手这个项目时读这份文档就能快速上手。
-> 最后更新：2026-10-03（大版本迭代日）
+> 最后更新：2026-10-05（收款链路排查日）
 
 ## 项目状态 (2026-10-03)
 
@@ -56,14 +56,12 @@
 ## 📋 下一步（按优先级，详见 TODO.md）
 
 1. ~~SEO 基础优化~~ ✅ 已完成 2026-10-03：已上线（SW v50）。剩用户手动提交 Google Search Console
-2. **Pro 付费（进行中）**：LS 商店 luckypickglobal 已建，PayPal 收款已绑定，商品文案见 docs/ls-products.md
-   - 钱路：买家 → LS → PayPal(hinewly@163.com) → 万里汇美元账号(待激活) → 国内卡
-   - 等用户：税表 W-8BEN、2FA、Activate Store 身份验证 → 然后建 5 个商品
-3. **万里汇（WorldFirst）**：原跨境电商账户类型不符（客服确认虚拟商品须走"数娱出海"），已重新申请开发者账户（2026-10-04 提交实名，1-2 工作日审核）；通过后重申美元收款账号（自建站）并配 PayPal
-   - 注意：账户类型显示"开发者账户"（来源待确认）；B2B 要营业执照、数娱出海不适合，最终走"跨境电商"个人通道
-   - "出口退税/离岸人民币"提示与个人虚拟商品无关，选人民币即可
-   - 通过后：把美元账号当"美国银行账户"加进 PayPal 提现 → 钱路全通
-   - 如待办"同名银行账户"仍挂起 → 补绑本人银行卡收款人
+2. **Pro 付费（被卡，转 Plan B）**：LS 商店已建但 Activate Store 和税表都走 Stripe，Stripe 拒绝中国 → 已发邮件问 LS 客服，等回复
+   - Plan B: **Paddle**（不走 Stripe，打款到 Payoneer，中国开发者成熟路线）
+   - Plan C: Gumroad / Plan D: USDT（代码已写好，就差 TRC20 地址）
+   - 详见 TODO.md 第 4 条（2026-10-05 已更新完整行动清单）
+3. **收款账户**：万里汇 Citibank 美元账户已拿到（wf-usd-account.txt），但 PayPal 绑定时被拒；节后问万里汇 + PayPal 客服（话术见 docs/payment-support-questions.md）
+   - 建议同时注册 Payoneer 作为备用收款基础设施
 4. **EuroMillions/UK Lotto 数据源**：原网站拦 Cloudflare IP，需找官方开放 API
 5. Reddit/Product Hunt 推广（SEO 完成后）
 6. 远期：Capacitor iOS 打包 → App Store StoreKit
