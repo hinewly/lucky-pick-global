@@ -28,3 +28,12 @@
 
 ## 等接线（同 paddle-payment-scaffold.md）
 Paddle 建单档商品 $9.99（勾 license key）→ app.js 填 clientToken + pri_xxx → worker 填 TIER_BY_PRICE → secrets 两个 → webhook 配 https://lucky.daobox.app/api/paddle/webhook
+
+## 测试激活码通道（2026-10-08 补充，commit 0ec9556 + 813b0e9）
+- 用户要 5 个测试码在 Paddle 注册前试激活流程
+- 实现：handleLicenseActivate 里在 Paddle 校验**之前**检查 env.TEST_LICENSE_KEYS（逗号分隔，
+  存 Cloudflare secret，不进公开仓库）；命中→返回 tier:pro-test；未命中→走 Paddle 官方校验
+- **坑**：PADDLE_API_KEY 的 503 守卫原来在函数开头，会把测试码也拦掉——已把守卫移到测试码检查之后
+- 当前 5 个测试码（已写入 secret）：LPG-TEST-AYPU-NDJW / 00R8-ZTIL / HWAG-UVVS / JDXP-U4HG / Y51E-G57A
+- 已知小瑕疵：输错码时前端提示 "license service not configured"（因为落到 Paddle 分支返回 503），语义不够友好，接线后自然消失
+- 激活状态存 localStorage（luckyPick.pro.v1 + deviceId），清浏览器数据后重新贴码即可恢复
