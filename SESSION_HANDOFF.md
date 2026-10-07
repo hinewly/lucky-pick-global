@@ -37,6 +37,7 @@
 3. 数据管道：GitHub Actions → Cloudflare Cron + KV 实时供应（60 期）
 4. Intentional 文案上线（tagline-intent 斜体 + tagline）
 5. **频率统计**：Recent Draws 卡内 20/50 期窗口，hot(>130%期望)/warm/cold(<70%) 色标网格
+9. **功能墙付费模式**（2026-10-08，commit e29ee30，v1.2/SW v54）：免费纯随机不限+因素生成2组/天+保存3组/天；Pro $9.99 单档=因素不限+10组/次+勾选导出图片/.txt+保存不限；页脚+购买弹窗免责声明；详见 docs/handoff/feature-wall-paywall.md
 6. **自选号码**："Or Enter Your Own" 卡（在 Recent Draws 之下、Factors 之上——用户特意要求这个位置）
    - 1/2/3 注，校验个数/范围/重复，通过后进 Your Numbers 结果区
 7. 交互：因素添加从弹窗改**内联输入**（lucky/avoid 可连续加，Enter 提交，inline-msg 报错）
