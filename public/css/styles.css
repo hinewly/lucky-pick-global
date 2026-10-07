@@ -1905,3 +1905,19 @@ header.hero h1 .refresh-app-btn:disabled {
   color: var(--accent-deep);
   box-shadow: inset 0 0 0 1px var(--accent);
 }
+
+/* ========== 功能墙/勾选导出 ========== */
+.result-card.selected {
+  border-color: #D97757;
+  box-shadow: 0 0 0 2px rgba(217, 119, 87, 0.2);
+}
+.pro-perks {
+  text-align: left;
+  line-height: 1.9;
+  margin: 10px 0;
+  padding: 10px 14px;
+  background: #FAF8F5;
+  border: 1px solid #E8E2D8;
+  border-radius: 10px;
+  font-size: 13px;
+}

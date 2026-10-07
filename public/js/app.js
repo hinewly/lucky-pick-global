@@ -37,8 +37,8 @@
     manualCount: 2,       // 自选号码注数
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
-  const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v1.1';  // 产品版本（显示给用户看），与 SW 缓存版本无关
+  const FREE_FACTOR_SETS = 2;  // 免费用户因素生成额度（组/天）；纯随机生成不限次
+  const APP_VERSION = 'v1.2';  // 产品版本（显示给用户看），与 SW 缓存版本无关
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -85,13 +85,6 @@
   function removeFactor(i) { state.factors.splice(i, 1); renderFactors(); saveState(); }
 
   function generate() {
-    // 检查生成限额（devMode / Pro 用户跳过）
-    const status = genLimitStatus();
-    if (!status.canGen) {
-      showUpgradeModal('You\'ve used all ' + FREE_GEN_LIMIT + ' free Generations today.\n\nEach Generate gives you fresh numbers for the next drawing.\n\nUpgrade to Pro for unlimited Generations and Saves.\n\n(Coming to App Store soon — leave your email for early access?)');
-      return;
-    }
-
     const game = state.game;
     const history = state.history[game];
     if (!history || history.length === 0) {
@@ -113,9 +106,21 @@
       }
     }
 
+    // 功能墙：因素生成免费 2 组/天（按组扣）；纯随机不限；Pro 不限
+    const hasFactors = state.factors.length > 0;
+    let genCount = state.setCount;
+    if (hasFactors && !state.isPro && !state.devMode) {
+      const st = genLimitStatus();
+      if (!st.canGen) {
+        showUpgradeModal('You\'ve used your ' + FREE_FACTOR_SETS + ' free personal picks today.\n\nPro gives you unlimited factor picks, up to 10 sets per tap, and image/text export.');
+        return;
+      }
+      genCount = Math.min(state.setCount, st.remaining);
+    }
+
     let sets = [];
     try {
-      sets = Engine.generate(game, expandedFactors, history, { count: state.setCount, lookback: 50 });
+      sets = Engine.generate(game, expandedFactors, history, { count: genCount, lookback: 50 });
     } catch (err) {
       console.error('Generation failed:', err);
       alert('Failed to generate numbers: ' + err.message);
@@ -132,11 +137,12 @@
       }));
     }
 
-    // 生成成功：扣一次（devMode / Pro 跳过）
-    if (!state.isPro && !state.devMode) {
-      state.gensToday++;
+    // 生成成功：因素生成按组扣额度（devMode / Pro 跳过）
+    if (hasFactors && !state.isPro && !state.devMode) {
+      state.gensToday += sets.length;
       saveGenLimit();
     }
+    selectedResultIdx.clear();
 
     state.sets = sets;
     renderResults();
@@ -213,11 +219,15 @@
     const saveAllBtn = el('button', { class: 'toolbar-btn primary', onClick: () => exportAllAsImage() }, ['🖼️ Save all as image']);
     toolbar.appendChild(copyAllBtn);
     toolbar.appendChild(saveAllBtn);
+    if (state.isPro || state.devMode) {
+      toolbar.appendChild(el('button', { class: 'toolbar-btn primary', onClick: () => exportSelectedAsImage() }, ['🖼️ Export selected']));
+      toolbar.appendChild(el('button', { class: 'toolbar-btn primary', onClick: () => exportSelectedAsText() }, ['⬇️ Export .txt']));
+    }
 
     // 组数切换
     const countWrap = el('div', { class: 'set-count-wrap' });
     countWrap.appendChild(el('span', { class: 'set-count-label', text: 'Sets:' }));
-    [1, 3, 5].forEach(n => {
+    ((state.isPro || state.devMode) ? [1, 3, 5, 10] : [1, 3, 5]).forEach(n => {
       const c = el('button', {
         class: 'set-count-btn' + (state.setCount === n ? ' active' : ''),
         onClick: () => { state.setCount = n; saveState(); renderResults(); },
@@ -255,6 +265,18 @@
       actions.appendChild(copyBtn);
       actions.appendChild(exportBtn);
       actions.appendChild(saveBtn);
+      if (state.isPro || state.devMode) {
+        const selected = selectedResultIdx.has(idx);
+        const checkBtn = el('button', {
+          class: 'action-btn' + (selected ? ' success' : ''),
+          onClick: () => {
+            if (selectedResultIdx.has(idx)) selectedResultIdx.delete(idx);
+            else selectedResultIdx.add(idx);
+            renderResults();
+          },
+        }, [selected ? '☑ Selected' : '☐ Select']);
+        actions.appendChild(checkBtn);
+      }
       card.appendChild(actions);
       container.appendChild(card);
     });
@@ -337,6 +359,38 @@
 
   function exportSetAsImage(set) {
     return exportSetsAsImage([set]);
+  }
+
+  function getSelectedSets() {
+    if (!selectedResultIdx.size) {
+      toast('Tick the sets you want to export first (☑ Select).');
+      return null;
+    }
+    return state.sets.filter((_, i) => selectedResultIdx.has(i));
+  }
+
+  function exportSelectedAsImage() {
+    const picks = getSelectedSets();
+    if (picks) {
+      exportSetsAsImage(picks);
+      toast('🖼️ Exported ' + picks.length + ' selected ' + (picks.length === 1 ? 'set' : 'sets') + ' as image');
+    }
+  }
+
+  function exportSelectedAsText() {
+    const picks = getSelectedSets();
+    if (!picks) return;
+    const text = formatSetsText(picks);
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'luckypick-picks-' + beijingToday() + '.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    toast('⬇️ Exported ' + picks.length + ' selected ' + (picks.length === 1 ? 'set' : 'sets') + ' as .txt');
   }
 
   function exportSetsAsImage(sets) {
@@ -641,10 +695,12 @@
   }
 
   function genLimitStatus() {
-    if (state.isPro || state.devMode) return { canGen: true, remaining: 999, isPro: state.isPro, devMode: state.devMode };
+    if (state.isPro || state.devMode) return { canGen: true, remaining: 999, unlimited: true, isPro: state.isPro, devMode: state.devMode };
+    // 功能墙：纯随机生成不限次；加了因素才占每日额度
+    if (!state.factors || state.factors.length === 0) return { canGen: true, remaining: 999, unlimited: true, isPro: false };
     ensureGenRollover();
-    const remaining = Math.max(0, FREE_GEN_LIMIT - state.gensToday);
-    return { canGen: remaining > 0, remaining, isPro: false };
+    const remaining = Math.max(0, FREE_FACTOR_SETS - state.gensToday);
+    return { canGen: remaining > 0, remaining, unlimited: false, isPro: false };
   }
 
   function ensureGenRollover() {
@@ -729,10 +785,11 @@
   const PADDLE_CONFIG = {
     clientToken: '',   // Paddle 后台 → Developer tools → Client-side tokens（pdl_ntfset_ 开头）
     env: 'sandbox',    // 先 sandbox 调通，正式收款改 'production'
-    prices: { starter: '', standard: '', heavy: '' },  // 建商品后填 price ID（pri_ 开头）
+    prices: { pro: '' },  // 建商品后填 price ID（pri_ 开头，单档 Pro $9.99）
   };
   let paddleReady = false;
   let paddleLoading = false;
+  let selectedResultIdx = new Set();  // Pro 勾选导出用的结果下标
 
   function ensurePaddle(cb) {
     if (paddleReady) return true;
@@ -819,27 +876,31 @@
   function showUpgradeModal(msg) {
     const mask = $('modal-mask');
     const modal = $('modal');
-    const tierBtn = (tier, name, price, saves, featured) =>
-      '<button class="pro-tier' + (featured ? ' featured' : '') + '" data-tier="' + tier + '">' +
-      '<b>' + name + '</b><br/>' + price + '<br/><span class="muted small">' + saves + '</span></button>';
-    modal.innerHTML = '<h3>⭐ Upgrade to Pro</h3>' +
+    modal.innerHTML = '<h3>⭐ Upgrade to Pro — $9.99</h3>' +
       '<p style="white-space:pre-wrap;line-height:1.5;">' + msg + '</p>' +
       '<div class="pro-pricing">' +
-        tierBtn('starter', 'Starter', '$12.99', '10 saves') +
-        tierBtn('standard', 'Standard', '$29.99', '30 saves', true) +
-        tierBtn('heavy', 'Heavy', '$69.99', '100 saves') +
+        '<div class="pro-tier featured"><b>Pro</b><br/>$9.99<br/><span class="muted small">one-time</span></div>' +
+      '</div>' +
+      '<div class="pro-perks">' +
+        '💎 Unlimited personal factor picks (free: 2/day)<br/>' +
+        '🎯 Generate up to 10 sets per tap<br/>' +
+        '🖼️ Export picks as image or text file<br/>' +
+        '💾 Unlimited saved numbers' +
       '</div>' +
       '<p class="muted small center">One-time purchase · no subscription · key sent by email</p>' +
       '<div class="license-row">' +
         '<input type="text" id="license-input" placeholder="Already bought? Enter license key" autocomplete="off" />' +
         '<button class="ok" id="license-activate">Activate</button>' +
       '</div>' +
-      '<div class="actions"><button class="cancel" id="modal-cancel">Maybe later</button></div>';
+      '<div class="actions">' +
+        '<button class="ok" id="modal-ok">Buy Pro — $9.99</button>' +
+        '<button class="cancel" id="modal-cancel">Maybe later</button>' +
+      '</div>' +
+      '<p class="muted small center" style="margin-top:8px;">LuckyPick makes picking numbers more fun and personal. It does not improve your odds of winning — draws are always random.</p>';
     mask.classList.add('show');
     $('modal-cancel').onclick = closeModal;
-    modal.querySelectorAll('[data-tier]').forEach(btn => {
-      btn.onclick = () => startCheckout(btn.dataset.tier);
-    });
+    const buyBtn = $('modal-ok');
+    if (buyBtn) buyBtn.onclick = () => startCheckout('pro');
     $('license-activate').onclick = () => {
       const key = $('license-input').value.trim();
       if (!key) { toast('Paste the license key from your email first.'); return; }
@@ -914,13 +975,16 @@
     if (!el) return;
     const status = genLimitStatus();
     if (state.isPro) {
-      el.innerHTML = '💎 <b>Pro</b> · Unlimited generations';
+      el.innerHTML = '💎 <b>Pro</b> · Unlimited personal picks';
       el.className = 'gen-counter pro';
     } else if (state.devMode) {
       el.innerHTML = '🛠 <b>Dev Mode</b> · Unlimited (testing)';
       el.className = 'gen-counter dev';
+    } else if (status.unlimited) {
+      el.innerHTML = '🎯 Free · Unlimited random picks · Add factors for ' + FREE_FACTOR_SETS + ' personal picks/day';
+      el.className = 'gen-counter';
     } else {
-      el.innerHTML = '🎯 <b>' + status.remaining + ' / ' + FREE_GEN_LIMIT + '</b> free Generations today';
+      el.innerHTML = '🎯 <b>' + status.remaining + '</b> personal ' + (status.remaining === 1 ? 'pick' : 'picks') + ' left today';
       el.className = 'gen-counter' + (status.remaining === 0 ? ' exhausted' : '');
     }
   }
@@ -1306,13 +1370,16 @@
     if (!el) return;
     const status = genLimitStatus();
     if (state.isPro) {
-      el.innerHTML = '💎 <b>Pro</b> · Unlimited generations';
+      el.innerHTML = '💎 <b>Pro</b> · Unlimited personal picks';
       el.className = 'gen-counter pro';
     } else if (state.devMode) {
       el.innerHTML = '🛠 <b>Dev Mode</b> · Unlimited (testing)';
       el.className = 'gen-counter dev';
+    } else if (status.unlimited) {
+      el.innerHTML = '🎯 Free · Unlimited random picks · Add factors for ' + FREE_FACTOR_SETS + ' personal picks/day';
+      el.className = 'gen-counter';
     } else {
-      el.innerHTML = '🎯 <b>' + status.remaining + ' / ' + FREE_GEN_LIMIT + '</b> free Generations today';
+      el.innerHTML = '🎯 <b>' + status.remaining + '</b> personal ' + (status.remaining === 1 ? 'pick' : 'picks') + ' left today';
       el.className = 'gen-counter' + (status.remaining === 0 ? ' exhausted' : '');
     }
   }

@@ -317,11 +317,9 @@ function parseUkLotto(html) {
 // ============================================================
 const PADDLE_API_BASE = 'https://api.paddle.com';
 
-// 建完商品后把 price ID 填进来（pri_ 开头）
+// 建完商品后把 price ID 填进来（pri_ 开头）；单档 Pro $9.99
 const TIER_BY_PRICE = {
-  // 'pri_01xxxx': 'starter',   // $12.99 Starter · 10 saves
-  // 'pri_01xxxx': 'standard',  // $29.99 Standard · 30 saves
-  // 'pri_01xxxx': 'heavy',     // $69.99 Heavy · 100 saves
+  // 'pri_01xxxx': 'pro',
 };
 
 function jsonResp(obj, status = 200) {
@@ -432,7 +430,7 @@ async function handleLicenseActivate(request, env) {
   const pid = lk && (lk.price_id || (lk.billing_details && lk.billing_details.price_id));
   if (pid && TIER_BY_PRICE[pid]) tier = TIER_BY_PRICE[pid];
   if (!tier && cached && cached.tier) tier = cached.tier;
-  if (!tier) tier = 'standard';
+  if (!tier) tier = 'pro';
 
   try {
     await env.LOTTERY_DATA.put(
