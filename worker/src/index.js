@@ -410,6 +410,18 @@ async function handleLicenseActivate(request, env) {
     } catch (e) {}
   }
 
+  // 测试激活码通道（Paddle 注册前用）：码存在 secret TEST_LICENSE_KEYS（逗号分隔），不进仓库
+  const testKeys = String(env.TEST_LICENSE_KEYS || '').split(',').map(s => s.trim()).filter(Boolean);
+  if (testKeys.includes(licenseKey)) {
+    try {
+      await env.LOTTERY_DATA.put(
+        'activation:' + licenseKey + ':' + deviceId,
+        JSON.stringify({ tier: 'pro-test', deviceId, activatedAt: new Date().toISOString() })
+      );
+    } catch (e) {}
+    return jsonResp({ ok: true, tier: 'pro-test', key: licenseKey });
+  }
+
   // Paddle 官方校验（重复激活同一 deviceId 是幂等的）
   const res = await fetch(PADDLE_API_BASE + '/activate-license', {
     method: 'POST',
