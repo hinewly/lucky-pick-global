@@ -1475,6 +1475,31 @@ header.hero h1 .refresh-app-btn:disabled {
   margin-bottom: 4px;
   color: #5b5b5b;
 }
+.pro-tier {
+  cursor: pointer;
+  font-family: inherit;
+  background: #fff;
+  color: inherit;
+}
+.pro-tier:hover {
+  border-color: #D97757;
+}
+.license-row {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.license-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1.5px solid #E0DCD4;
+  border-radius: 10px;
+  font-size: 13px;
+}
+.license-row .ok {
+  flex-shrink: 0;
+}
 
 /* ========== Factor Help Details ========== */
 .factor-help {

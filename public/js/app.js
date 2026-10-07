@@ -723,30 +723,127 @@
     renderSavedNumbers();
   }
 
+  // ============================================================
+  // Paddle 收银台（注册账号后把 token / price ID 填进来即可开通）
+  // ============================================================
+  const PADDLE_CONFIG = {
+    clientToken: '',   // Paddle 后台 → Developer tools → Client-side tokens（pdl_ntfset_ 开头）
+    env: 'sandbox',    // 先 sandbox 调通，正式收款改 'production'
+    prices: { starter: '', standard: '', heavy: '' },  // 建商品后填 price ID（pri_ 开头）
+  };
+  let paddleReady = false;
+  let paddleLoading = false;
+
+  function ensurePaddle(cb) {
+    if (paddleReady) return true;
+    if (!PADDLE_CONFIG.clientToken) return false;
+    if (!window.Paddle) {
+      if (!paddleLoading) {
+        paddleLoading = true;
+        const s = document.createElement('script');
+        s.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
+        s.async = true;
+        s.onload = () => { paddleLoading = false; ensurePaddle(cb); };
+        document.head.appendChild(s);
+      }
+      return false;
+    }
+    try {
+      window.Paddle.Environment.set(PADDLE_CONFIG.env);
+      window.Paddle.Initialize({
+        token: PADDLE_CONFIG.clientToken,
+        eventCallback: (ev) => {
+          if (ev && ev.name === 'checkout.completed') {
+            toast('✅ Payment received! Check your email for the license key.');
+            setTimeout(() => {
+              const key = prompt('Paste the license key from your email to activate Pro now:');
+              if (key && key.trim()) activateLicense(key.trim());
+            }, 800);
+          }
+        },
+      });
+      paddleReady = true;
+      if (cb) cb();
+    } catch (e) {
+      return false;
+    }
+    return true;
+  }
+
+  function startCheckout(tier) {
+    if (!PADDLE_CONFIG.clientToken || !PADDLE_CONFIG.prices[tier]) {
+      toast('💳 Checkout is almost ready — hang tight!');
+      return;
+    }
+    ensurePaddle(() => {
+      window.Paddle.Checkout.open({ items: [{ priceId: PADDLE_CONFIG.prices[tier], quantity: 1 }] });
+    });
+  }
+
+  function getDeviceId() {
+    try {
+      let id = localStorage.getItem('luckyPick.deviceId');
+      if (!id) {
+        id = 'dev-' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+        localStorage.setItem('luckyPick.deviceId', id);
+      }
+      return id;
+    } catch (e) { return 'anonymous'; }
+  }
+
+  async function activateLicense(key) {
+    toast('⏳ Verifying license…');
+    try {
+      const res = await fetch('/api/license/activate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ licenseKey: key, deviceId: getDeviceId() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast('❌ ' + (data.error || 'Invalid license key.'));
+        return;
+      }
+      state.isPro = true;
+      try {
+        localStorage.setItem('luckyPick.pro.v1', JSON.stringify({ key, tier: data.tier || 'standard', activatedAt: Date.now() }));
+      } catch (e) {}
+      closeModal();
+      renderSavedNumbers();
+      toast('💎 Pro activated · Unlimited saves!');
+    } catch (e) {
+      toast('⚠️ Network error — please try again.');
+    }
+  }
+
   function showUpgradeModal(msg) {
     const mask = $('modal-mask');
     const modal = $('modal');
+    const tierBtn = (tier, name, price, saves, featured) =>
+      '<button class="pro-tier' + (featured ? ' featured' : '') + '" data-tier="' + tier + '">' +
+      '<b>' + name + '</b><br/>' + price + '<br/><span class="muted small">' + saves + '</span></button>';
     modal.innerHTML = '<h3>⭐ Upgrade to Pro</h3>' +
       '<p style="white-space:pre-wrap;line-height:1.5;">' + msg + '</p>' +
       '<div class="pro-pricing">' +
-        '<div class="pro-tier"><b>Starter</b><br/>$12.99<br/><span class="muted small">10 saves</span></div>' +
-        '<div class="pro-tier featured"><b>Standard</b><br/>$29.99<br/><span class="muted small">30 saves</span></div>' +
-        '<div class="pro-tier"><b>Heavy</b><br/>$69.99<br/><span class="muted small">100 saves</span></div>' +
+        tierBtn('starter', 'Starter', '$12.99', '10 saves') +
+        tierBtn('standard', 'Standard', '$29.99', '30 saves', true) +
+        tierBtn('heavy', 'Heavy', '$69.99', '100 saves') +
       '</div>' +
-      '<p class="muted small center">💡 Coming to App Store soon · one-time purchase, no subscription</p>' +
-      '<div class="actions">' +
-        '<button class="cancel" id="modal-cancel">Maybe later</button>' +
-        '<button class="ok" id="modal-ok">Notify me</button>' +
-      '</div>';
+      '<p class="muted small center">One-time purchase · no subscription · key sent by email</p>' +
+      '<div class="license-row">' +
+        '<input type="text" id="license-input" placeholder="Already bought? Enter license key" autocomplete="off" />' +
+        '<button class="ok" id="license-activate">Activate</button>' +
+      '</div>' +
+      '<div class="actions"><button class="cancel" id="modal-cancel">Maybe later</button></div>';
     mask.classList.add('show');
     $('modal-cancel').onclick = closeModal;
-    $('modal-ok').onclick = () => {
-      const email = prompt('Email (we\'ll only email when Pro launches):');
-      if (email && /^.+@.+\..+$/.test(email)) {
-        try { localStorage.setItem('luckyPick.notifyEmail', email); } catch (e) {}
-        toast('📧 Got it. We\'ll email you when Pro launches.');
-      }
-      closeModal();
+    modal.querySelectorAll('[data-tier]').forEach(btn => {
+      btn.onclick = () => startCheckout(btn.dataset.tier);
+    });
+    $('license-activate').onclick = () => {
+      const key = $('license-input').value.trim();
+      if (!key) { toast('Paste the license key from your email first.'); return; }
+      activateLicense(key);
     };
   }
 
@@ -1541,6 +1638,10 @@
   }
 
   function loadState() {
+    try {
+      const pro = JSON.parse(localStorage.getItem('luckyPick.pro.v1') || 'null');
+      if (pro && pro.key) state.isPro = true;
+    } catch (e) {}
     try {
       const s = localStorage.getItem(state.saveKey);
       if (!s) return;

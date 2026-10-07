@@ -89,6 +89,16 @@ export default {
       });
     }
 
+    // Paddle webhook：支付/许可证事件 → 验签 → 存 KV
+    if (url.pathname === '/api/paddle/webhook' && request.method === 'POST') {
+      return handlePaddleWebhook(request, env);
+    }
+
+    // 激活码校验：POST /api/license/activate { licenseKey, deviceId }
+    if (url.pathname === '/api/license/activate' && request.method === 'POST') {
+      return handleLicenseActivate(request, env);
+    }
+
     return env.ASSETS.fetch(request);
   },
 
@@ -297,4 +307,139 @@ function parseUkLotto(html) {
     if (draws.length >= 50) break;
   }
   return draws;
+}
+
+// ============================================================
+// Paddle 收款（Plan B）：webhook + 激活码校验
+// 部署后需设置 secrets：
+//   wrangler secret put PADDLE_API_KEY          （Paddle 后台 API key）
+//   wrangler secret put PADDLE_WEBHOOK_SECRET   （webhook 签名密钥）
+// ============================================================
+const PADDLE_API_BASE = 'https://api.paddle.com';
+
+// 建完商品后把 price ID 填进来（pri_ 开头）
+const TIER_BY_PRICE = {
+  // 'pri_01xxxx': 'starter',   // $12.99 Starter · 10 saves
+  // 'pri_01xxxx': 'standard',  // $29.99 Standard · 30 saves
+  // 'pri_01xxxx': 'heavy',     // $69.99 Heavy · 100 saves
+};
+
+function jsonResp(obj, status = 200) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+async function verifyPaddleSignature(request, raw, secret) {
+  const sigHeader = request.headers.get('Paddle-Signature') || '';
+  const parts = {};
+  sigHeader.split(';').forEach(p => {
+    const idx = p.indexOf('=');
+    if (idx > 0) parts[p.slice(0, idx).trim()] = p.slice(idx + 1).trim();
+  });
+  const ts = Number(parts.ts);
+  const h1 = parts.h1;
+  if (!ts || !h1) return false;
+  // 防重放：时间戳误差超过 10 秒拒绝
+  if (Math.abs(Date.now() / 1000 - ts) > 10) return false;
+  const key = await crypto.subtle.importKey(
+    'raw', new TextEncoder().encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(ts + ':' + raw));
+  const expected = [...new Uint8Array(mac)].map(b => b.toString(16).padStart(2, '0')).join('');
+  return expected === h1;
+}
+
+async function handlePaddleWebhook(request, env) {
+  const secret = env.PADDLE_WEBHOOK_SECRET;
+  if (!secret) return jsonResp({ error: 'webhook secret not configured' }, 503);
+
+  const raw = await request.text();
+  const ok = await verifyPaddleSignature(request, raw, secret);
+  if (!ok) return jsonResp({ error: 'invalid signature' }, 401);
+
+  let event;
+  try { event = JSON.parse(raw); } catch (e) { return jsonResp({ error: 'bad json' }, 400); }
+
+  try {
+    if (event.event_type === 'transaction.completed') {
+      const tx = event.data || {};
+      const priceIds = (tx.items || []).map(i => i.price && i.price.id).filter(Boolean);
+      const tier = priceIds.map(id => TIER_BY_PRICE[id]).find(Boolean) || null;
+      await env.LOTTERY_DATA.put('order:' + tx.id, JSON.stringify({
+        tier, priceIds,
+        customerId: tx.customer_id || null,
+        at: new Date().toISOString(),
+      }));
+    }
+    if (event.event_type === 'license_keys.created' || event.event_type === 'license_keys.updated') {
+      const lk = event.data || {};
+      if (lk.key) {
+        const prevRaw = await env.LOTTERY_DATA.get('license:' + lk.key);
+        const prev = prevRaw ? JSON.parse(prevRaw) : {};
+        prev.status = lk.status || prev.status;
+        prev.instanceLimit = lk.instance_limit || prev.instanceLimit;
+        prev.updatedAt = new Date().toISOString();
+        await env.LOTTERY_DATA.put('license:' + lk.key, JSON.stringify(prev));
+      }
+    }
+  } catch (e) {
+    // 存储失败不阻塞应答；失败时 Paddle 会重试
+  }
+  return jsonResp({ ok: true });
+}
+
+async function handleLicenseActivate(request, env) {
+  const apiKey = env.PADDLE_API_KEY;
+  if (!apiKey) return jsonResp({ error: 'license service not configured' }, 503);
+
+  const body = await request.json().catch(() => null);
+  const licenseKey = String((body && body.licenseKey) || '').trim();
+  const deviceId = String((body && body.deviceId) || '').trim() || 'default-device';
+  if (!licenseKey) return jsonResp({ error: 'licenseKey required' }, 400);
+
+  // KV 缓存里标记为非 active 的直接拒绝（省一次 API 调用）
+  const cachedRaw = await env.LOTTERY_DATA.get('license:' + licenseKey);
+  let cached = null;
+  if (cachedRaw) {
+    try {
+      cached = JSON.parse(cachedRaw);
+      if (cached.status && cached.status !== 'active') {
+        return jsonResp({ error: 'license key is not active' }, 403);
+      }
+    } catch (e) {}
+  }
+
+  // Paddle 官方校验（重复激活同一 deviceId 是幂等的）
+  const res = await fetch(PADDLE_API_BASE + '/activate-license', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + apiKey, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ license_key: licenseKey, instance_id: deviceId.slice(0, 255) }),
+  });
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    if (res.status === 404 || res.status === 422) {
+      return jsonResp({ error: 'invalid or expired license key' }, 401);
+    }
+    return jsonResp({ error: 'license validation failed' }, 502);
+  }
+  const lk = data && data.data;
+
+  // tier：本地 price 映射优先，其次 webhook 缓存，兜底 standard
+  let tier = null;
+  const pid = lk && (lk.price_id || (lk.billing_details && lk.billing_details.price_id));
+  if (pid && TIER_BY_PRICE[pid]) tier = TIER_BY_PRICE[pid];
+  if (!tier && cached && cached.tier) tier = cached.tier;
+  if (!tier) tier = 'standard';
+
+  try {
+    await env.LOTTERY_DATA.put(
+      'activation:' + licenseKey + ':' + deviceId,
+      JSON.stringify({ tier, deviceId, activatedAt: new Date().toISOString() })
+    );
+  } catch (e) {}
+
+  return jsonResp({ ok: true, tier, key: licenseKey });
 }
