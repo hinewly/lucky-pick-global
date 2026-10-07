@@ -58,6 +58,8 @@
 1. ~~SEO 基础优化~~ ✅ 已完成 2026-10-03：已上线（SW v50）。剩用户手动提交 Google Search Console
 2. **Pro 付费（被卡，转 Plan B）**：LS 商店已建但 Activate Store 和税表都走 Stripe，Stripe 拒绝中国 → 已发邮件问 LS 客服，等回复
    - Plan B: **Paddle**（不走 Stripe，打款到 Payoneer，中国开发者成熟路线）
+     ✅ 2026-10-08 代码侧已上线（webhook + 激活码接口 + Pro 弹窗结算），等账号注册后填密钥接线，
+     详见 docs/handoff/paddle-payment-scaffold.md
    - Plan C: Gumroad / Plan D: USDT（代码已写好，就差 TRC20 地址）
    - 详见 TODO.md 第 4 条（2026-10-05 已更新完整行动清单）
 3. **收款账户**：万里汇 Citibank 美元账户已拿到（wf-usd-account.txt），但 PayPal 绑定时被拒；节后问万里汇 + PayPal 客服（话术见 docs/payment-support-questions.md）

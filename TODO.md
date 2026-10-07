@@ -25,7 +25,10 @@
 ## 🟡 中优先级（Pro 付费闭环）
 
 ### 4. Pro 付费 — 销售平台收款
-- **状态**: 🔶 LS 被卡，转 Paddle 备选（2026-10-05 更新）
+- **状态**: 🟡 代码侧已就绪，等注册 Paddle + Payoneer 账号接线（2026-10-08 更新）
+- **2026-10-08 凌晨**: Paddle 收款底座已上线（commit 4e57ca4）——Pro 弹窗三档可点结算、
+  /api/paddle/webhook 验签、/api/license/activate 激活码校验、SW v52。
+  密钥/price ID 填入后即可收款，详见 docs/handoff/paddle-payment-scaffold.md
 - **LS 当前状态（2026-10-05）**:
   - LS 账号已注册、商店 luckypickglobal 已创建、PayPal 收款已绑定 (hinewly@163.com)
   - ⛔ **Activate Store 身份验证被卡**：验证流程走 Stripe，Stripe 提示 "payouts not available in your country"（中国不支持）
