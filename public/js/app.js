@@ -38,7 +38,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_GEN_LIMIT = 5;    // 每天免费生成次数
-  const APP_VERSION = 'v1.0';  // 产品版本（显示给用户看），与 SW 缓存版本无关
+  const APP_VERSION = 'v1.1';  // 产品版本（显示给用户看），与 SW 缓存版本无关
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -1829,6 +1829,10 @@
     });
     const genBtn = $('btn-generate');
     if (genBtn) genBtn.addEventListener('click', generate);
+    const upgradeBtn = $('upgrade-btn');
+    if (upgradeBtn) upgradeBtn.addEventListener('click', () =>
+      showUpgradeModal('Unlock Pro — keep more of your lucky picks, every day.'));
+
 
     // Frequency stats 窗口切换
     document.querySelectorAll('#freq-lookback button').forEach(btn => {
