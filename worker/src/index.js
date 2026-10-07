@@ -390,9 +390,6 @@ async function handlePaddleWebhook(request, env) {
 }
 
 async function handleLicenseActivate(request, env) {
-  const apiKey = env.PADDLE_API_KEY;
-  if (!apiKey) return jsonResp({ error: 'license service not configured' }, 503);
-
   const body = await request.json().catch(() => null);
   const licenseKey = String((body && body.licenseKey) || '').trim();
   const deviceId = String((body && body.deviceId) || '').trim() || 'default-device';
@@ -421,6 +418,10 @@ async function handleLicenseActivate(request, env) {
     } catch (e) {}
     return jsonResp({ ok: true, tier: 'pro-test', key: licenseKey });
   }
+
+  // 走到这里说明不是测试码 → 需要 Paddle 官方校验
+  const apiKey = env.PADDLE_API_KEY;
+  if (!apiKey) return jsonResp({ error: 'license service not configured' }, 503);
 
   // Paddle 官方校验（重复激活同一 deviceId 是幂等的）
   const res = await fetch(PADDLE_API_BASE + '/activate-license', {
