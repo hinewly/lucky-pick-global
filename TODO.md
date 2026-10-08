@@ -54,6 +54,7 @@
   - 正式版：接入 Worker API 验证激活码（像 vocab-pwa 那样）
   - 简单版：硬编码一批激活码在 JS 里（不安全但能用）
 - **定价（2026-10-08 已改）**: 单档 Pro $9.99 一次性（原三档已砍）；功能墙模式——免费纯随机不限+因素2组/天+保存3组/天，Pro 因素不限+10组/次+勾选导出图/文+保存不限；详见 docs/handoff/feature-wall-paywall.md
+- **2026-10-08 Paddle 被拒+申诉**: 注册/验证完成但域名审查被拒（Gambling+Donations 误判）；已删打赏区块+申诉（3 个工作日复审）；详见 docs/handoff/paddle-rejection-appeal.md
 
 ### 5. 收款账户（万里汇 WorldFirst）
 - **状态**: 🔶 审核中 2026-10-03（已提交实名认证材料，当天 18:00 前出结果，最迟 1-2 个工作日）
@@ -71,13 +72,16 @@
 - **2026-10-05 补充**: 
   - ⚠️ PayPal 绑万里汇 Citibank 美元账户失败（PayPal 报"您需要一些帮助才能关联此账户"），节后问万里汇客服
   - 建议同时注册 **Payoneer**：兼容性比万里汇好，Paddle 直打 Payoneer，国内提现成熟
+- **2026-10-08 Paddle 状态**: 账号已注册但域名审查被拒（详见 docs/handoff/paddle-rejection-appeal.md），
+  申诉已提交等邮件；Payoneer 注册顺延到申诉结果出来后（Paddle 不通就先看 Gumroad/USDT）
 - **说明**: 代码无需改动，用户自己操作
 - **提醒**: 攒够金额再提，别每笔都提
 
 ### 6. USDT 真实地址
 - **状态**: 等用户提供
 - **内容**: 取消 index.html 里 USDT 收款区的注释，填入真实 TRC20 地址
-- **代码**: 已写好，只差地址
+- **代码**: 已写好。⚠️ 2026-10-08 配合 Paddle 申诉删除打赏区块时，index.html 里的 USDT 注释块一并被删，
+  需要时从 git 历史（60f3a60 之前）找回或参照 docs/handoff/paddle-rejection-appeal.md 重写
 
 ---
 
