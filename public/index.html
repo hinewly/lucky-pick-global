@@ -415,7 +415,7 @@
     For entertainment purposes only. This app does not guarantee any winning odds.
     Lottery drawings are random. Please play responsibly. Must be 18+ to play.<br />
     Not affiliated with Powerball, Mega Millions, or any official lottery operator.<br />
-    <span class="contact-line">📧 Contact: <a href="mailto:[email protected]">[email protected]</a></span>
+    <span class="contact-line">📧 Contact: <span id="contact-email"></span></span>
   </p>
 
 </div>
@@ -435,9 +435,17 @@
 
 <!-- 合规免责声明（娱乐工具，不保证中奖） -->
 <footer class="muted small" style="text-align:center; padding: 24px 16px 40px;">
-  LuckyPick is an entertainment tool. Lottery draws are random — we cannot predict or guarantee winning numbers. Play responsibly.
+  LuckyPick is an entertainment tool. Lottery draws are random — we cannot predict or guarantee winning numbers. Play responsibly.<br /><a href="/terms">Terms of Service</a> · <a href="/privacy">Privacy Policy</a> · <a href="/refunds">Refund Policy</a>
 </footer>
 
+<script>
+  // Build contact email via JS to avoid Cloudflare email obfuscation mangling mailto links
+  (function () {
+    var u = 'hinewly', d = '163.com';
+    var el = document.getElementById('contact-email');
+    if (el) el.innerHTML = '<a href="mailto:' + u + '@' + d + '">' + u + '@' + d + '</a>';
+  })();
+</script>
 <!-- Service Worker (Production only, skipped on localhost) -->
 <script>
   const isLocalDev = location.hostname === 'localhost'
