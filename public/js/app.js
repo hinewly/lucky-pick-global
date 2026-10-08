@@ -1758,7 +1758,6 @@
     row('Factors', state.factors.length);
     row('Last draw', last ? (last.date || '—') : 'none');
     row('Save key', state.saveKey);
-    row('PayPal tip', 'paypal.me/hinewly');
   }
 
   // ============================================================
