@@ -47,7 +47,7 @@
   1. 等 LS 客服邮件回复 → 有方案就继续 LS
   2. 问万里汇客服：PayPal 能不能绑万里汇 Citibank 美元账户（话术见 docs/payment-support-questions.md 第 1 部分）
   3. 问 PayPal 中国客服：跨境人民币结算选哪个行业编码（同文件第 3 部分）
-  4. 注册 Payoneer（免费）：就算不走 Paddle，Payoneer 也是收款基础设施，兼容性好
+  4. ~~注册 Payoneer~~ ✅ 2026-10-08 已注册成功（见下方 Payoneer 段落）
   5. LS 确认走不通 → 注册 Paddle，重新走验证 + 建商品 + 接 Payoneer
   6. 全部不行 → USDT 兜底
 - **技术方案（无论哪个平台都一样）**:
@@ -71,13 +71,20 @@
 - **审核通过后**: 拿美元收款账号 → 加到 PayPal 提现（作为美国银行账户）→ 钱到万里汇 → 提现到支付宝/银行卡
 - **2026-10-05 补充**: 
   - ⚠️ PayPal 绑万里汇 Citibank 美元账户失败（PayPal 报"您需要一些帮助才能关联此账户"），节后问万里汇客服
-  - 建议同时注册 **Payoneer**：兼容性比万里汇好，Paddle 直打 Payoneer，国内提现成熟
+  - ~~建议同时注册 **Payoneer**~~ ✅ 2026-10-08 已注册成功，账户就绪
 - **2026-10-08 Paddle 状态**: 账号已注册但域名审查被拒（详见 docs/handoff/paddle-rejection-appeal.md），
-  申诉已提交等邮件；Payoneer 注册顺延到申诉结果出来后（Paddle 不通就先看 Gumroad/USDT）
+  申诉已提交等邮件（最晚 10-13 出结果，结果见邮件）；Payoneer 已就绪可直接对接 Paddle/Gumroad
 - **说明**: 代码无需改动，用户自己操作
 - **提醒**: 攒够金额再提，别每笔都提
 
-### 6. USDT 真实地址
+### 6. Payoneer（派安盈）账户 ✅ 已就绪
+- **状态**: ✅ 注册成功 2026-10-08 18:02，官方确认「账户已准备就绪，即刻开始收取 Payoneer 款项」
+- **邮箱**: hinewly@outlook.com（国外平台统一用 Outlook，规则见 AGENTS.md）
+- **客户 ID**: 107432985
+- **待办**: 登录 myaccount.payoneer.com 确认收款账户（USD receiving account）+ 提现方式（国内银行卡/支付宝）
+- ⚠️ 2026-10-08 19:50 收到「Unknown sign-in from unrecognized device」警告邮件，如是本人操作可忽略，否则改密码+开 2FA
+
+### 7. USDT 真实地址
 - **状态**: 等用户提供
 - **内容**: 取消 index.html 里 USDT 收款区的注释，填入真实 TRC20 地址
 - **代码**: 已写好。⚠️ 2026-10-08 配合 Paddle 申诉删除打赏区块时，index.html 里的 USDT 注释块一并被删，

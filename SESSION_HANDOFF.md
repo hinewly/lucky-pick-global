@@ -66,7 +66,7 @@
    - Plan C: Gumroad / Plan D: USDT（代码已写好，就差 TRC20 地址）
    - 详见 TODO.md 第 4 条（2026-10-05 已更新完整行动清单）
 3. **收款账户**：万里汇 Citibank 美元账户已拿到（wf-usd-account.txt），但 PayPal 绑定时被拒；节后问万里汇 + PayPal 客服（话术见 docs/payment-support-questions.md）
-   - 建议同时注册 Payoneer 作为备用收款基础设施
+   - ✅ 2026-10-08 Payoneer 已注册成功（outlook 邮箱，客户 ID 107432985），账户就绪；待登录确认 USD 收款账户与提现方式
 4. **EuroMillions/UK Lotto 数据源**：原网站拦 Cloudflare IP，需找官方开放 API
 5. Reddit/Product Hunt 推广（SEO 完成后）
 6. 远期：Capacitor iOS 打包 → App Store StoreKit

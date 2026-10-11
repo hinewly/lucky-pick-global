@@ -21,3 +21,9 @@
 
 - 存量保护：改动前 git status 干净、与 origin/main 一致
 - 产品定位：free / no signup / no tracking，付费走 Paddle license key + 设备激活
+
+## 邮箱规则（用户要求）
+
+- **所有与国外平台/服务的联系，统一使用 hinewly@outlook.com**（Paddle、Payoneer、Gumroad、Lemon Squeezy 等）
+- 原因：国外平台对 Outlook 邮箱的信任度和政策宽松度优于 163 等国内邮箱
+- hinewly@163.com 仅用于国内服务；此前 Paddle 注册用了 163 邮箱，后续新注册一律用 Outlook
