@@ -33,3 +33,23 @@
 - 邮箱全量搜索确认：除 10-08 原始拒信外无任何后续邮件，结果只更新在后台状态。
 - **结论：Paddle 在 lucky.daobox.app + 当前站点形态下不可用**。机器分类仍为 Gambling + Donations，申诉无法推翻。
 - 若走 Paddle，需按邮件指引「product offering 变更后以新 application 重新申请」——即新域名 + 重构产品定位。
+
+## A1 方案执行：draw 子域名重提（2026-10-15 晚）
+
+- **Paddle 后台确认**：Website approval 按「域名/子域名」单独审批，同账号可直接 Add domain 重提，无需新建账号。
+- **代码改造**（commit 2c5b96f，v1.3 / SW v57，Version 8576a9ac）：
+  - 新增 `draw.daobox.app` 路由（`lucky.` 保留过渡，两域名同时在线）
+  - SEO 中性化：title/description/keywords/og/twitter 改「Random Number & Draw Generator」口径；keywords 移除 lottery/Powerball/Mega Millions；指南首句改为通用抽签工具（giveaways, raffles, game nights + lottery-style picks）
+  - 剩余 lottery/Powerball 引用仅保留：游戏 Tab、数据文件、法律免责声明（免责声明是过审加分项，勿删）
+  - terms/privacy/pricing 内 URL 全部指向 draw.daobox.app
+- **部署验证**：draw 域 5 个页面全部 200；lucky 域过渡正常；测试激活码 LPG-TEST-AYPU-NDJW 在 draw 域返回 pro-test ✓
+- **Paddle 送审**：draw.daobox.app 已提交，状态 In review（2026-10-15）
+- 周任务机器人 10-12 曾升 SW v56→v57 并更新开奖数据，rebase 时已吸收，部署包含最新数据
+
+## 下一步（审批通过后接线）
+
+1. Paddle 建单档商品 $9.99（勾 license key）
+2. app.js PADDLE_CONFIG 填 clientToken + price ID；worker TIER_BY_PRICE 映射
+3. wrangler secret put PADDLE_API_KEY / PADDLE_WEBHOOK_SECRET
+4. webhook URL 填 https://draw.daobox.app/api/paddle/webhook
+5. sandbox 测单 → 切 production；网页端购买入口域名引用全部在 draw 域下无需再改
