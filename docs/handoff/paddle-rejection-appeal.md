@@ -26,3 +26,10 @@
 2. **彩票主题内容容易被机器归入 Gambling**，申诉话术核心 = 强调「工具非博彩、无真实货币交易」
 3. Paddle 验证表单的 Pricing page 字段必须是带路径 URL（/pricing），裸域名校验不过
 4. Playwright 操作 Typeform 的 Radix 下拉：点击 option 不生效时，用「打开对话框 → 纯键盘 ArrowDown 导航 → Enter」100% 可靠
+
+## 申诉结果（2026-10-15 确认）
+
+- **申诉被驳回**。Paddle 后台「Verify your account」步骤显示 Failed：We couldn't approve your website。
+- 邮箱全量搜索确认：除 10-08 原始拒信外无任何后续邮件，结果只更新在后台状态。
+- **结论：Paddle 在 lucky.daobox.app + 当前站点形态下不可用**。机器分类仍为 Gambling + Donations，申诉无法推翻。
+- 若走 Paddle，需按邮件指引「product offering 变更后以新 application 重新申请」——即新域名 + 重构产品定位。

@@ -1,6 +1,6 @@
 /**
  * lucky-pick-global Worker
- * - 托管静态站点（lucky.daobox.app）
+ * - 托管静态站点（draw.daobox.app）
  * - Cron 每周一抓最新开奖数据 → 存 KV
  * - /data/{game}.js 请求优先返回 KV 里的新数据，KV 没有则走静态文件
  */

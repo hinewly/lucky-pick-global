@@ -38,7 +38,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_FACTOR_SETS = 2;  // 免费用户因素生成额度（组/天）；纯随机生成不限次
-  const APP_VERSION = 'v1.2';  // 产品版本（显示给用户看），与 SW 缓存版本无关
+  const APP_VERSION = 'v1.3';  // 产品版本（显示给用户看），与 SW 缓存版本无关
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
