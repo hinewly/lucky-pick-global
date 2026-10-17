@@ -38,7 +38,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_FACTOR_SETS = 2;  // 免费用户因素生成额度（组/天）；纯随机生成不限次
-  const APP_VERSION = 'v1.3';  // 产品版本（显示给用户看），与 SW 缓存版本无关
+  const APP_VERSION = 'v1.4';  // 产品版本（显示给用户看），与 SW 缓存版本无关
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -780,61 +780,19 @@
   }
 
   // ============================================================
-  // Paddle 收银台（注册账号后把 token / price ID 填进来即可开通）
+  // Gumroad checkout（Plan C；Paddle 两轮域名审查被拒后弃用）
   // ============================================================
-  const PADDLE_CONFIG = {
-    clientToken: '',   // Paddle 后台 → Developer tools → Client-side tokens（pdl_ntfset_ 开头）
-    env: 'sandbox',    // 先 sandbox 调通，正式收款改 'production'
-    prices: { pro: '' },  // 建商品后填 price ID（pri_ 开头，单档 Pro $9.99）
-  };
-  let paddleReady = false;
-  let paddleLoading = false;
+  const GUMROAD_PRODUCT_URL = 'https://hinewly.gumroad.com/l/luckypick-pro';
   let selectedResultIdx = new Set();  // Pro 勾选导出用的结果下标
 
-  function ensurePaddle(cb) {
-    if (paddleReady) return true;
-    if (!PADDLE_CONFIG.clientToken) return false;
-    if (!window.Paddle) {
-      if (!paddleLoading) {
-        paddleLoading = true;
-        const s = document.createElement('script');
-        s.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
-        s.async = true;
-        s.onload = () => { paddleLoading = false; ensurePaddle(cb); };
-        document.head.appendChild(s);
-      }
-      return false;
-    }
-    try {
-      window.Paddle.Environment.set(PADDLE_CONFIG.env);
-      window.Paddle.Initialize({
-        token: PADDLE_CONFIG.clientToken,
-        eventCallback: (ev) => {
-          if (ev && ev.name === 'checkout.completed') {
-            toast('✅ Payment received! Check your email for the license key.');
-            setTimeout(() => {
-              const key = prompt('Paste the license key from your email to activate Pro now:');
-              if (key && key.trim()) activateLicense(key.trim());
-            }, 800);
-          }
-        },
-      });
-      paddleReady = true;
-      if (cb) cb();
-    } catch (e) {
-      return false;
-    }
-    return true;
-  }
-
   function startCheckout(tier) {
-    if (!PADDLE_CONFIG.clientToken || !PADDLE_CONFIG.prices[tier]) {
-      toast('💳 Checkout is almost ready — hang tight!');
-      return;
+    if (tier !== 'pro') return;
+    try {
+      window.open(GUMROAD_PRODUCT_URL, '_blank', 'noopener');
+      toast('💳 Opening secure checkout…');
+    } catch (e) {
+      location.href = GUMROAD_PRODUCT_URL;
     }
-    ensurePaddle(() => {
-      window.Paddle.Checkout.open({ items: [{ priceId: PADDLE_CONFIG.prices[tier], quantity: 1 }] });
-    });
   }
 
   function getDeviceId() {

@@ -22,3 +22,6 @@ crons = ["0 1 * * 1"]
 directory = "../public"
 run_worker_first = ["/data/*", "/api/*"]
 binding = "ASSETS"
+
+[vars]
+GUMROAD_PRODUCT_ID = "YeHXEjcq64PWL1xEPrcyIw=="

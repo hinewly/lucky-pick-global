@@ -25,7 +25,7 @@
 ## 🟡 中优先级（Pro 付费闭环）
 
 ### 4. Pro 付费 — 销售平台收款
-- **状态**: 🟡 代码侧已就绪，等注册 Paddle + Payoneer 账号接线（2026-10-08 更新）
+- **状态**: ✅ Gumroad 通道已接线上线（2026-10-17 更新；Paddle 不可用，Lemon Squeezy 中国验证受阻）
 - **2026-10-08 凌晨**: Paddle 收款底座已上线（commit 4e57ca4）——Pro 弹窗三档可点结算、
   /api/paddle/webhook 验签、/api/license/activate 激活码校验、SW v52。
   密钥/price ID 填入后即可收款，详见 docs/handoff/paddle-payment-scaffold.md
@@ -41,7 +41,7 @@
   - 身份验证不走 Stripe，自己做审核，中国个人开发者可注册
   - 打款走 Payoneer（派安盈）→ 提现到国内银行卡，成熟路线
   - 商品文案直接复用 docs/ls-products.md，把 LS 换成 Paddle 即可
-- **Plan C: Gumroad**: PayPal 收款，可作为第二通道
+- **Plan C: Gumroad（现役）**: ✅ 2026-10-17 商品已发布并接线；Gumroad → PayPal → 万里汇 Citibank 美元账户 → 支付宝/国内银行卡。商品页 https://hinewly.gumroad.com/l/luckypick-pro
 - **Plan D: USDT**: app 里已写好收款代码（index.html 注释区），就差填 TRC20 地址，永远不会被卡
 - **节后行动顺序（按优先级）**:
   1. 等 LS 客服邮件回复 → 有方案就继续 LS
@@ -57,6 +57,13 @@
 - **2026-10-08 Paddle 被拒+申诉**: 注册/验证完成但域名审查被拒（Gambling+Donations 误判）；已删打赏区块+申诉（3 个工作日复审）；详见 docs/handoff/paddle-rejection-appeal.md
 
 ### 5. 收款账户（万里汇 WorldFirst）
+- **2026-10-17 后台实测（Codex 登录确认）**:
+  - ✅ 账号已认证（Account ID 2120120502447763，个人账号，邹*凡 / h. zou，邮箱 hinewly@outlook.com 可登录）
+  - ✅ 风险管理无待办任务
+  - ⚠️ 当前登录（portal.worldfirst.com.cn）显示账号类型为「跨境电商」（CN EC Public Pool），店铺/资产/交易全为空，看不到 Citibank ••6995 收款账户
+  - ⚠️ 首页仍在推「开发者账户快捷开通」——10-08 开通收款账户用的「开发者账户（daobox）」在当前登录不可见，可能存在另一个登录入口或待从开发者入口进入
+  - 💡 PayPal 绑定以交接文档记录为准（daobox-home/docs/handoff/payoneer-worldfirst-payment-rails.md：「PayPal 重新添加 Citibank ••6995 成功、已关联」）；wf-usd-account.txt 的账户信息可直接用于 Gumroad 银行收款配置
+  - 密码已存 docs/账号密码管理.md（用户 2026-10-17 口述提供，授权 Codex 自行登录）
 - **状态**: 🔶 审核中 2026-10-03（已提交实名认证材料，当天 18:00 前出结果，最迟 1-2 个工作日）
 - **进展**: 走"跨境电商"个人流程注册（公司名填"无"），B2B/数娱出海通道均不适用
 - **2026-10-04 更新**:

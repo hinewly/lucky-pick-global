@@ -46,6 +46,18 @@
 - **Paddle 送审**：draw.daobox.app 已提交，状态 In review（2026-10-15）
 - 周任务机器人 10-12 曾升 SW v56→v57 并更新开奖数据，rebase 时已吸收，部署包含最新数据
 
+## draw 重提结果（2026-10-17 确认）
+
+- **draw.daobox.app 也被拒**。后台 Settings → Website approval 显示两个域名状态均为 **Not approved**（lucky、draw 都是）。
+- 账号级 Verify your account 步骤整体 Failed，提示仍是老的「We couldn't approve your website」，无新邮件、无具体拒绝原因。
+- Actions 菜单只有 Remove domain，无重新送审按钮；后台看不到逐域名时间线。
+- **结论：Paddle 在 daobox.app 现有产品形态下两轮均不可用**。换子域名 + 文案中性化未能推翻机器分类。
+- 可选后续（等用户决策）：
+  - A. 联系 Paddle 客服（paddle.com/help/start）要 draw 被拒的具体理由，再决定是否三提
+  - B. Plan C：Gumroad（打款走 PayPal，中国提现有摩擦）
+  - C. Plan D：USDT 直收（需用户提供 TRC20 地址）
+  - D. 全新干净域名 + 全新产品定位重走 Paddle（成本最高，成功率未知）
+
 ## 下一步（审批通过后接线）
 
 1. Paddle 建单档商品 $9.99（勾 license key）

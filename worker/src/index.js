@@ -407,7 +407,7 @@ async function handleLicenseActivate(request, env) {
     } catch (e) {}
   }
 
-  // 测试激活码通道（Paddle 注册前用）：码存在 secret TEST_LICENSE_KEYS（逗号分隔），不进仓库
+  // 测试激活码通道：码存在 secret TEST_LICENSE_KEYS（逗号分隔），不进仓库
   const testKeys = String(env.TEST_LICENSE_KEYS || '').split(',').map(s => s.trim()).filter(Boolean);
   if (testKeys.includes(licenseKey)) {
     try {
@@ -419,7 +419,41 @@ async function handleLicenseActivate(request, env) {
     return jsonResp({ ok: true, tier: 'pro-test', key: licenseKey });
   }
 
-  // 走到这里说明不是测试码 → 需要 Paddle 官方校验
+  // Gumroad 官方校验（Plan C 现役收款通道）
+  const gumroadProductId = env.GUMROAD_PRODUCT_ID;
+  if (gumroadProductId) {
+    const res = await fetch('https://api.gumroad.com/v2/licenses/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        product_id: gumroadProductId,
+        license_key: licenseKey,
+        increment_uses_count: false,
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data || !data.success) {
+      return jsonResp({ error: 'invalid or expired license key' }, 401);
+    }
+    const purchase = data.purchase || {};
+    if (purchase.refunded || purchase.chargebacked) {
+      return jsonResp({ error: 'license key is not active' }, 403);
+    }
+    const tier = 'pro';
+    try {
+      await env.LOTTERY_DATA.put(
+        'activation:' + licenseKey + ':' + deviceId,
+        JSON.stringify({ tier, deviceId, purchaseId: purchase.id || null, activatedAt: new Date().toISOString() })
+      );
+      await env.LOTTERY_DATA.put(
+        'license:' + licenseKey,
+        JSON.stringify({ status: 'active', productId: gumroadProductId, updatedAt: new Date().toISOString() })
+      );
+    } catch (e) {}
+    return jsonResp({ ok: true, tier, key: licenseKey });
+  }
+
+  // 兼容旧 Paddle 激活码（已停止新销售）
   const apiKey = env.PADDLE_API_KEY;
   if (!apiKey) return jsonResp({ error: 'license service not configured' }, 503);
 
