@@ -56,6 +56,12 @@
 - **定价（2026-10-08 已改）**: 单档 Pro $9.99 一次性（原三档已砍）；功能墙模式——免费纯随机不限+因素2组/天+保存3组/天，Pro 因素不限+10组/次+勾选导出图/文+保存不限；详见 docs/handoff/feature-wall-paywall.md
 - **2026-10-08 Paddle 被拒+申诉**: 注册/验证完成但域名审查被拒（Gambling+Donations 误判）；已删打赏区块+申诉（3 个工作日复审）；详见 docs/handoff/paddle-rejection-appeal.md
 
+### 4.1 海外商店扩展与商品命名（Gumroad 下一步）
+- **状态**: ⏳ 待做
+- **风险**: `LuckyPick` 可能继续被支付/平台风控误判为彩票类；当前描述已避开预测、中奖、提高概率等表述。
+- **短期动作**: 评估把 Gumroad 商品 `LuckyPick Pro` 改成更中性名称，例如 `Number Studio Pro` / `Random Studio Pro` / `Pick Studio Pro`；同步改站内 Pro 弹窗、pricing/refunds 文案。
+- **中期动作**: 把 Gumroad 逐步扩展成 DaoBox 家族海外软件商店，上架学习/工具类产品，不只放单一彩票类应用。
+
 ### 5. 收款账户（万里汇 WorldFirst）
 - **2026-10-17 后台实测（Codex 登录确认）**:
   - ✅ 账号已认证（Account ID 2120120502447763，个人账号，邹*凡 / h. zou，邮箱 hinewly@outlook.com 可登录）
