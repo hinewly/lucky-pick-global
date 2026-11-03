@@ -38,7 +38,7 @@
   };
   const FREE_SAVE_LIMIT = 3;   // 每天免费保存次数
   const FREE_FACTOR_SETS = 2;  // 免费用户因素生成额度（组/天）；纯随机生成不限次
-  const APP_VERSION = 'v1.4';  // 产品版本（显示给用户看），与 SW 缓存版本无关
+  const APP_VERSION = 'v1.5';  // 产品版本（显示给用户看），与 SW 缓存版本无关
   // 北京时间今日 (YYYY-MM-DD)
   function beijingToday() {
     const d = new Date();
@@ -1749,8 +1749,8 @@
   async function refreshData() {
     const btn = document.getElementById('refresh-app-btn');
     if (!btn) return;
-    const original = btn.textContent;
-    btn.textContent = '⏳ Refreshing...';
+    const original = btn.innerHTML;
+    btn.innerHTML = '⏳ Refreshing...';
     btn.disabled = true;
     try {
       // 1. 清掉所有 SW 缓存
@@ -1773,7 +1773,7 @@
       location.replace(url);
     } catch (e) {
       alert('Refresh failed: ' + e.message);
-      btn.textContent = original;
+      btn.innerHTML = original;
       btn.disabled = false;
     }
   }
