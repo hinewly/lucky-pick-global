@@ -99,6 +99,11 @@ export default {
       return handleLicenseActivate(request, env);
     }
 
+    // GSC 验证文件：Cloudflare assets 默认会把 .html 307 到无扩展名 URL，Google 要求精确路径 200
+    if (url.pathname === '/google884ff0ec50b4246e.html') {
+      return env.ASSETS.fetch(new URL('/google884ff0ec50b4246e', url));
+    }
+
     return env.ASSETS.fetch(request);
   },
 

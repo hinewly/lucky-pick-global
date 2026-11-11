@@ -20,7 +20,7 @@ crons = ["0 1 * * 1"]
 # 前端静态资源（带 binding → Worker 先运行，由代码决定何时回源到静态文件）
 [assets]
 directory = "../public"
-run_worker_first = ["/data/*", "/api/*"]
+run_worker_first = ["/data/*", "/api/*", "/google884ff0ec50b4246e.html"]
 binding = "ASSETS"
 
 [vars]
