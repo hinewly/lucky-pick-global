@@ -74,8 +74,8 @@
 
 - lucky-pick-global/wf-usd-account.txt（银行账户，勿提交）
 - docs/账号密码管理.md（密码档案）
-- daobox-home/docs/handoff/payoneer-worldfirst-payment-rails.md（线路图）
-- lucky-pick-global/docs/handoff/feature-wall-paywall.md（定价与功能墙）
+- daobox-home/docs/handoff/收款链路交接-Paddle-Payoneer-WorldFirst-PayPal-2026-10-08.md（线路图）
+- lucky-pick-global/docs/handoff/功能墙付费模式-2026-10-08-凌晨-commit-e29ee30.md（定价与功能墙）
 - lucky-pick-global/worker/src/index.js（激活接口，待适配 Gumroad）
 
 ## 2026-10-17 完成记录

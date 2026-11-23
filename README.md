@@ -130,5 +130,5 @@ Personal project. Code may be reused for educational purposes.
 
 ## Game Rules Reference
 
-See [LOTTERIES.md](./LOTTERIES.md) for detailed rules, prize tiers, and how-to-play
+See [彩票玩法说明.md](./彩票玩法说明.md) for detailed rules, prize tiers, and how-to-play
 guides for all 4 supported lotteries (Powerball, Mega Millions, EuroMillions, UK Lotto).

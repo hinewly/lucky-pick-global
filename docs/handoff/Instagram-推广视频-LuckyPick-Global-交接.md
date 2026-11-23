@@ -18,7 +18,7 @@ v1.4 发布版已生成。网页端注册 Instagram 卡在 +86 手机短信验�
 - **教训：TTS 批量生成禁用 shell 数组循环，必须逐句显式生成**（本次已改用 V1-V6 逐句生成并复核时长）
 - 修复后全片语音分段检测：6 句、时长各异、无重复；字幕/画面/配音三对位抽帧质检通过
 - 片长 20.4 秒；发布文件：_temp-screenshots/2026-11/LuckyPick海外推广视频-v1.4字幕版-20261102.mp4
-- 中英对照文案已归档：lucky-pick-global/docs/promo/instagram-video-script-bilingual.md（已提交 git）
+- 中英对照文案已归档：lucky-pick-global/docs/promo/Instagram视频脚本-双语.md（已提交 git）
 
 ### v1.3 变更（2026-11-02 01:10）
 

@@ -1,7 +1,7 @@
 # Lemon Squeezy 商品文案（建商品时直接复制）
 
 > Store: luckypickglobal.lemonsqueezy.com
-> 定价依据 TODO.md 已确认方案：免费版每日 3 次保存，Pro 按保存次数解锁。
+> 定价依据 待办.md 已确认方案：免费版每日 3 次保存，Pro 按保存次数解锁。
 
 ---
 

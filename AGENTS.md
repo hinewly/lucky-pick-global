@@ -20,7 +20,7 @@
 
 ## 部署与验证
 
-- 部署：`cd worker && wrangler deploy`（wrangler 路径和 API Token 见 SESSION_HANDOFF.md）
+- 部署：`cd worker && wrangler deploy`（wrangler 路径和 API Token 见 会话交接.md）
 - 验证：curl 带时间戳参数确认新版本串已生效
 - git push 偶发 HTTP2 错误时加 `-c http.version=HTTP/1.1`
 
